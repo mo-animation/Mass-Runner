@@ -240,7 +240,8 @@ def phbot_status(pid):
     text = lambda o, n: b[o:o + n].split(b'\0', 1)[0].decode('utf-8', 'replace')
     return {'name': text(0x037, 64), 'connected': bool(b[0x02d]), 'in_game': bool(b[0x02d] and b[0x02f]),
             'botting': bool(b[0x035]), 'dead': bool(b[0x153]), 'level': b[0x137], 'zone': text(0x4ac, 32),
-            'exp': struct.unpack_from('<Q', b, 0x15c)[0], 'level_exp': struct.unpack_from('<Q', b, 0x164)[0]}
+            'exp': struct.unpack_from('<Q', b, 0x15c)[0], 'level_exp': struct.unpack_from('<Q', b, 0x164)[0],
+            'client_pid': struct.unpack_from('<I', b, 0x020)[0]}
 
 
 def show_bot(pid, show):
@@ -249,6 +250,41 @@ def show_bot(pid, show):
         ctypes.memmove(view + 0x4cd, b'\x01' if show else b'\x02', 1)
         return True
     return bool(_phbot_shm(pid, 0x4ce, work, write=True))
+
+
+def _windows_of(pid):
+    """titled top-level windows of a process"""
+    if sys.platform != 'win32' or not pid:
+        return []
+    user32 = ctypes.windll.user32
+    found = []
+    proto = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+
+    def cb(hwnd, _):
+        owner = ctypes.c_ulong()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
+        if owner.value == pid and user32.GetWindowTextLengthW(hwnd) > 0 and not user32.GetWindow(hwnd, 4):  # no owner
+            found.append(hwnd)
+        return True
+
+    user32.EnumWindows(proto(cb), 0)
+    return found
+
+
+def show_client(bot_pid, show):
+    """show (restore) or hide the game client of a bot (phBot started it with --hideclient); windows changed.
+    The Elysian client's small LV / HP window (class SRO_StatusWidget) stays hidden."""
+    wins = []
+    for hwnd in _windows_of((phbot_status(bot_pid) or {}).get('client_pid', 0)):
+        cls = ctypes.create_unicode_buffer(64)
+        ctypes.windll.user32.GetClassNameW(hwnd, cls, 64)
+        if cls.value != 'SRO_StatusWidget':
+            wins.append(hwnd)
+    for hwnd in wins:
+        ctypes.windll.user32.ShowWindow(hwnd, 9 if show else 0)       # SW_RESTORE / SW_HIDE
+        if show:
+            ctypes.windll.user32.SetForegroundWindow(hwnd)
+    return len(wins)
 
 
 def process_image(pid):

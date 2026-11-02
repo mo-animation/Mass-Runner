@@ -242,6 +242,8 @@ class App:
         self.menu.add_separator()
         self.menu.add_command(label='Show phBot', command=lambda: self.each(lambda c: c.proc and rc.show_bot(c.proc.pid, True)))
         self.menu.add_command(label='Hide phBot', command=lambda: self.each(lambda c: c.proc and rc.show_bot(c.proc.pid, False)))
+        self.menu.add_command(label='Show client', command=lambda: self.each(lambda c: c.proc and rc.show_client(c.proc.pid, True)))
+        self.menu.add_command(label='Hide client', command=lambda: self.each(lambda c: c.proc and rc.show_client(c.proc.pid, False)))
         self.tree.bind('<Button-3>', self.on_menu)
 
         self.fill_events()
