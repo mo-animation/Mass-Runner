@@ -33,4 +33,10 @@ with open(os.path.join('Log', 'Elysian_%s_Log.txt' % char), 'a') as f:
                 'talking to the NPC (dungeon full?) - trying again every 3s until it works (try 2).\n')
     else:
         f.write('[10:00:00] [MoDungeon] Run 1 finished (1/1).\n[10:00:00] [MoDungeon] All 1 run(s) done - stopping.\n')
-time.sleep(600)
+quits = os.environ.get('FAKE_NO_QUIT', '').split(',')
+for _ in range(6000):                       # phBot's graceful close flag (Mass Runner's close); FAKE_NO_QUIT ignore it
+    if ctypes.string_at(view + 0x5e6, 1)[0] and char not in quits:
+        with open('quit_%s.txt' % char, 'w') as f:
+            f.write('quit')
+        sys.exit(0)
+    time.sleep(0.1)

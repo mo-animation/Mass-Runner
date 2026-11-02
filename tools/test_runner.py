@@ -44,6 +44,7 @@ def main():
             'close_delay_seconds': 0.5})
         os.environ['FAKE_LOW'] = 'fnuk04'
         os.environ['FAKE_PLAYED'] = 'fnuk06'
+        os.environ['FAKE_NO_QUIT'] = 'fnuk07'      # ignores the graceful close: terminated after QUIT_WAIT
         logs = []
         r = rc.Runner(settings, log=logs.append)
         assert [c.character for c in r.chars][0] == 'fnuk01' and len(r.chars) == 12, 'escort left out'
@@ -62,6 +63,11 @@ def main():
         res = r.results
         print('results:', {k: v['result'] for k, v in sorted(res.items())})
         assert most <= 3, 'more than 3 open: %d' % most
+        quit = sorted(f[5:-4] for f in os.listdir(phbot) if f.startswith('quit_'))
+        assert quit == ['fnuk%02d' % i for i in range(1, 11) if i != 7], quit     # closed by the graceful close
+        assert not r.closing, 'bots still closing'
+        alive = [c.character for c in r.chars if c.proc and rc.process_alive(c.proc.pid)]
+        assert not alive, alive
         assert res['fnuk04']['result'] == 'not ready', res['fnuk04']
         assert res['fnuk06']['result'] == 'no entries', res['fnuk06']
         assert all(res['fnuk%02d' % i]['result'] == 'done' for i in range(1, 11) if i not in (4, 6))

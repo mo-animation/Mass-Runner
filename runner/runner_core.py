@@ -330,6 +330,29 @@ def kill_tree(pid):
                        creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
 
 
+QUIT_WAIT = 15      # seconds a bot gets to close by itself before it is terminated
+
+
+def quit_bot(pid):
+    """close a phBot the way phBot's own Manager does: its graceful close flag (0x5e6), then terminate it if it is
+    still open after QUIT_WAIT seconds. A terminated phBot never logs out of its ProjectHax session: many of them
+    in a few minutes (characters that were refused at once) left new bots stuck on "Disconnected" without a client.
+    Blocks up to QUIT_WAIT seconds: run it in a thread."""
+    client = (phbot_status(pid) or {}).get('client_pid', 0)
+
+    def flag(view):
+        ctypes.memmove(view + 0x5e6, b'\x01', 1)
+        return True
+    if _phbot_shm(pid, 0x5e7, flag, write=True):
+        end = time.time() + QUIT_WAIT
+        while time.time() < end and process_alive(pid):
+            time.sleep(0.5)
+    if process_alive(pid):
+        kill_tree(pid)
+    if client and process_alive(client):       # its game client, when phBot left it behind
+        kill_tree(client)
+
+
 def running_phbots(s, any_folder=False):
     """{character in lower case: pid} of the open phBots of the runner's phBot folder that are logged in
     (never the bots of another phBot folder: farm bots must not be taken over and closed)"""
@@ -506,6 +529,7 @@ class Runner:
         self.thread = None
         self.next_launch = 0.0
         self.chars = []
+        self.closing = []           # threads of bots being closed (they still count as open)
         self.reload()
 
     # -------------------------------------------------- setup
@@ -611,7 +635,8 @@ class Runner:
         return c.proc is not None and c.proc.poll() is None
 
     def open_count(self):
-        return sum(1 for c in self.chars if self.alive(c))
+        self.closing = [t for t in self.closing if t.is_alive()]
+        return sum(1 for c in self.chars if self.alive(c)) + len(self.closing)
 
     # -------------------------------------------------- control
     def start(self):
@@ -654,8 +679,11 @@ class Runner:
         self.stop_event.set()
 
     def close(self, c, why=''):
+        """the bot closes in the background (graceful close, then terminate); it still counts as open meanwhile"""
         if c.proc:
-            kill_tree(c.proc.pid)
+            t = threading.Thread(target=quit_bot, args=(c.proc.pid,), daemon=True)
+            t.start()
+            self.closing.append(t)
         c.proc, c.queued, c.finish = None, False, None
         c.state = why or 'closed'
 
