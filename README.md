@@ -47,6 +47,12 @@ there and reopens Mass Runner; open bots keep playing. On a new PC: copy the fol
 A new PC also needs its own phBot copy for the runner (phBot + MoDungeon.py + `Config/MoDungeon.<profile>.json`)
 at the path in settings `phbot_dir` / `phbot_dirs`. Mass Runner runs as administrator (phBot requires it).
 
+## Settings
+
+**Settings** (right side, under New run): the phBot folder Mass Runner opens (shown on the left of that line; it must have phBot.exe,
+and Plugins\MoDungeon.py for MoDungeon events), the finished list file (empty = OneDrive), a MassLeveler Escort
+folder on this PC, the timings, the lowest level that plays and hiding the game clients. Saved in settings.json.
+
 ## Files
 
 - `runner/runner_core.py` (the runner), `runner/mass_runner.py` (the window)

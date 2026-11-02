@@ -10,7 +10,7 @@ import subprocess
 import sys
 import time
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import filedialog, messagebox, ttk
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import runner_core as rc  # noqa: E402
@@ -166,6 +166,92 @@ class EventsWindow:
         self.top.destroy()
 
 
+class SettingsWindow:
+    """this PC's settings (settings.json): the runner's phBot folder, where the finished list comes from, timings"""
+
+    NUMBERS = (('launch_delay_seconds', 'Seconds between two bots opening'),
+               ('login_timeout_minutes', 'Minutes to get in the game (else opened again)'),
+               ('max_restarts', 'Times a bot is opened again'),
+               ('min_level', 'Lowest level that plays (else "not ready")'),
+               ('close_delay_seconds', 'Seconds before a done bot is closed'))
+
+    def __init__(self, app):
+        self.app = app
+        s = app.runner.s
+        top = self.top = tk.Toplevel(app.root)
+        top.title('Settings')
+        top.geometry('720x460')
+        dark_title(top)
+        top.transient(app.root)
+        f = ttk.Frame(top, padding=12)
+        f.pack(fill='both', expand=True)
+        f.columnconfigure(1, weight=1)
+        self.vars = {}
+
+        def path_row(r, key, label, value, pick, hint):
+            ttk.Label(f, text=label).grid(row=r, column=0, sticky='w', pady=(8, 0))
+            v = self.vars[key] = tk.StringVar(value=value)
+            ttk.Entry(f, textvariable=v).grid(row=r, column=1, sticky='we', padx=6, pady=(8, 0))
+            ttk.Button(f, text='Browse...', command=lambda: self.browse(v, pick)).grid(row=r, column=2, pady=(8, 0))
+            ttk.Label(f, text=hint, foreground=DARK['dim']).grid(row=r + 1, column=1, columnspan=2, sticky='w', padx=6)
+
+        path_row(0, 'phbot_dir', 'phBot folder', s['phbot_dir'], 'dir',
+                 'The phBot copy Mass Runner opens: phBot.exe + Plugins\\MoDungeon.py + its profiles')
+        path_row(2, 'finished_file', 'Finished list file', s.get('finished_file') or '', 'file',
+                 'Empty = %s (OneDrive)' % rc.finished_path(dict(s, finished_file='')))
+        path_row(4, 'massleveler_dir', 'MassLeveler Escort on this PC', (s.get('massleveler_dirs') or [''])[0],
+                 'dir', 'Optional: its finished characters count too (the one next to Mass Runner always does)')
+        row = 6
+        for key, label in self.NUMBERS:
+            ttk.Label(f, text=label).grid(row=row, column=0, columnspan=2, sticky='w', pady=(8 if row == 6 else 2, 0))
+            v = self.vars[key] = tk.StringVar(value=str(s[key]))
+            ttk.Entry(f, textvariable=v, width=8).grid(row=row, column=2, sticky='w', pady=(8 if row == 6 else 2, 0))
+            row += 1
+        self.hide = tk.BooleanVar(value=bool(s['hide_client']))
+        ttk.Checkbutton(f, text='Hide the game clients (right-click > Show client shows one)',
+                        variable=self.hide).grid(row=row, column=0, columnspan=3, sticky='w', pady=(10, 0))
+        bar = ttk.Frame(f)
+        bar.grid(row=row + 1, column=0, columnspan=3, sticky='e', pady=(16, 0))
+        ttk.Button(bar, text='Save', style='Accent.TButton', command=self.save).pack(side='left')
+        ttk.Button(bar, text='Cancel', command=top.destroy).pack(side='left', padx=6)
+
+    def browse(self, var, pick):
+        start = var.get() if os.path.exists(var.get()) else os.path.dirname(var.get() or rc.ROOT)
+        got = filedialog.askdirectory(parent=self.top, initialdir=start) if pick == 'dir' else \
+            filedialog.askopenfilename(parent=self.top, initialdir=start, filetypes=[('JSON', '*.json')])
+        if got:
+            var.set(os.path.normpath(got).replace('\\', '/'))
+
+    def save(self):
+        r = self.app.runner
+        phbot = self.vars['phbot_dir'].get().strip().replace('\\', '/')
+        exe = os.path.join(phbot, r.s['phbot_command'][0])
+        if not os.path.isfile(exe):
+            messagebox.showerror('Settings', 'No %s in\n%s' % (r.s['phbot_command'][0], phbot), parent=self.top)
+            return
+        if not os.path.isfile(os.path.join(phbot, 'Plugins', 'MoDungeon.py')) and not messagebox.askyesno(
+                'Settings', 'This phBot has no Plugins\\MoDungeon.py: MoDungeon events will not play.\n\nUse it anyway?',
+                parent=self.top):
+            return
+        if os.path.normcase(os.path.abspath(phbot)) != os.path.normcase(os.path.abspath(r.s['phbot_dir'])) \
+                and r.open_count():
+            messagebox.showerror('Settings', 'Bots are open from the current phBot folder - close them first.',
+                                 parent=self.top)
+            return
+        changes = {'phbot_dir': phbot, 'finished_file': self.vars['finished_file'].get().strip(),
+                   'massleveler_dirs': [d for d in [self.vars['massleveler_dir'].get().strip()] if d],
+                   'hide_client': bool(self.hide.get())}
+        for key, label in self.NUMBERS:
+            v = self.vars[key].get().strip()
+            if not v.isdigit():
+                messagebox.showerror('Settings', '%s: type a whole number.' % label, parent=self.top)
+                return
+            changes[key] = int(v)
+        r.save_settings(changes)
+        self.app.reload()
+        self.top.destroy()
+
+
 class App:
     def __init__(self, root):
         self.root = root
@@ -199,7 +285,6 @@ class App:
         ttk.Checkbutton(bar, text='Only finished characters', variable=self.only_var,
                         command=self.on_only).pack(side='left', padx=10)
         ttk.Button(bar, text='Update', command=self.on_update).pack(side='right')
-        ttk.Button(bar, text='Reload', command=self.reload).pack(side='right', padx=4)
 
         bar2 = ttk.Frame(root, padding=(8, 0, 8, 4))
         bar2.pack(fill='x')
@@ -211,6 +296,12 @@ class App:
         ttk.Button(bar2, text='Retry failed', command=self.runner.retry_failed).pack(side='right', padx=4)
         self.fin_label = ttk.Label(bar2, foreground=DARK['dim'], text='')
         self.fin_label.pack(side='right', padx=10)
+        bar3 = ttk.Frame(root, padding=(8, 0, 8, 4))
+        bar3.pack(fill='x')
+        self.phbot_label = ttk.Label(bar3, foreground=DARK['dim'], text='')
+        self.phbot_label.pack(side='left')
+        ttk.Button(bar3, text='Settings', command=lambda: SettingsWindow(self)).pack(side='right')
+        ttk.Button(bar3, text='Reload', command=self.reload).pack(side='right', padx=4)
 
         pane = ttk.Panedwindow(root, orient='vertical')
         pane.pack(fill='both', expand=True, padx=8, pady=(0, 8))
@@ -363,6 +454,9 @@ class App:
             ev['name'] if ev else 'no event', n_open, r.s['max_open'], todo, done, bad))
         self.fin_label.config(text=('Finished list: %d characters' % len(fin)) if fin is not None else
                               'Finished list missing: %s' % path)
+        phbot = r.s['phbot_dir']
+        self.phbot_label.config(text='phBot folder: %s%s' % (phbot, '' if os.path.isdir(phbot) else '   (NOT FOUND)'),
+                                foreground=DARK['dim'] if os.path.isdir(phbot) else DARK['bad'])
         self.root.after(1000, self.update)
 
     def on_update(self):
