@@ -1,0 +1,30 @@
+{
+  "phbot_dir": "D:/Games/silkroad/bots/phBot Runner",
+  "phbot_dirs": [
+    "D:/Games/silkroad/bots/phBot Runner"
+  ],
+  "server": "Elysian",
+  "mode": "client",
+  "hide_client": true,
+  "minimize_bots": true,
+  "max_open": 7,
+  "launch_delay_seconds": 20,
+  "min_level": 100,
+  "only_finished": true,
+  "finished_file": "",
+  "default_build": "ch_nuker",
+  "job_mastery": "Job Skills",
+  "job_skills": [
+    "Job - Trader Pouch"
+  ],
+  "event": "Isis Dungeon",
+  "events": [
+    {
+      "name": "Isis Dungeon",
+      "type": "MoDungeon",
+      "profile": "Isis",
+      "runs": 1,
+      "timeout_minutes": 45
+    }
+  ]
+}

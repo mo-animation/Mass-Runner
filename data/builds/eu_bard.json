@@ -1,0 +1,276 @@
+{
+  "id": "eu_bard",
+  "name": "EU bard (Bard / Warrior): dances, MP",
+  "race": "EU",
+  "create": {
+    "model": "CHAR_EU_MAN_NOBLE",
+    "chest": "ITEM_EU_M_CLOTHES_01_BA_A_DEF",
+    "legs": "ITEM_EU_M_CLOTHES_01_LA_A_DEF",
+    "shoes": "ITEM_EU_M_CLOTHES_01_FA_A_DEF",
+    "weapon": "ITEM_EU_HARP_01_A_DEF"
+  },
+  "masteries": [
+    "Bard",
+    "Warrior"
+  ],
+  "final": {
+    "sNormal": [],
+    "bNormal": [
+      "Mana Orbit",
+      "Noise",
+      "Guard Tambour",
+      "Awesome World",
+      "Dancing of Wizardry",
+      "Swing March"
+    ],
+    "bScript": [],
+    "Healing": [],
+    "Resurrect": [],
+    "Imbue": []
+  },
+  "party_buffs": {},
+  "brackets": [
+    {
+      "name": "Lv001-010",
+      "min": 1,
+      "max": 10,
+      "sNormal": [],
+      "bNormal": [
+        "Mana Cycle",
+        "Moving March"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv011-020",
+      "min": 11,
+      "max": 20,
+      "sNormal": [],
+      "bNormal": [
+        "Mana Cycle",
+        "Noise",
+        "Guard Tambour",
+        "Moving March"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv021-030",
+      "min": 21,
+      "max": 30,
+      "sNormal": [],
+      "bNormal": [
+        "Mana Cycle",
+        "Noise",
+        "Guard Tambour",
+        "Awesome World",
+        "Dancing of Magic",
+        "Moving March"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv031-040",
+      "min": 31,
+      "max": 40,
+      "sNormal": [],
+      "bNormal": [
+        "Mana Cycle",
+        "Noise",
+        "Guard Tambour",
+        "Awesome World",
+        "Dancing of Magic",
+        "Moving March"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv041-050",
+      "min": 41,
+      "max": 50,
+      "sNormal": [],
+      "bNormal": [
+        "Mana Cycle",
+        "Noise",
+        "Guard Tambour",
+        "Awesome World",
+        "Dancing of Magic",
+        "Moving March"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv051-060",
+      "min": 51,
+      "max": 60,
+      "sNormal": [],
+      "bNormal": [
+        "Mana Cycle",
+        "Noise",
+        "Guard Tambour",
+        "Awesome World",
+        "Dancing of Magic",
+        "Moving March"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv061-070",
+      "min": 61,
+      "max": 70,
+      "sNormal": [],
+      "bNormal": [
+        "Mana Cycle",
+        "Noise",
+        "Guard Tambour",
+        "Awesome World",
+        "Dancing of Magic",
+        "Swing March"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv071-080",
+      "min": 71,
+      "max": 80,
+      "sNormal": [],
+      "bNormal": [
+        "Mana Cycle",
+        "Noise",
+        "Guard Tambour",
+        "Awesome World",
+        "Dancing of Wizardry",
+        "Swing March"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv081-090",
+      "min": 81,
+      "max": 90,
+      "sNormal": [],
+      "bNormal": [
+        "Mana Orbit",
+        "Noise",
+        "Guard Tambour",
+        "Awesome World",
+        "Dancing of Wizardry",
+        "Swing March"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv091-100",
+      "min": 91,
+      "max": 999,
+      "sNormal": [],
+      "bNormal": [
+        "Mana Orbit",
+        "Noise",
+        "Guard Tambour",
+        "Awesome World",
+        "Dancing of Wizardry",
+        "Swing March"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    }
+  ],
+  "lines": {
+    "Mana Cycle": [
+      [
+        "Mana Cycle",
+        10
+      ]
+    ],
+    "Mana Orbit": [
+      [
+        "Mana Cycle",
+        10
+      ],
+      [
+        "Mana Orbit",
+        90
+      ]
+    ],
+    "Noise": [
+      [
+        "Noise",
+        20
+      ]
+    ],
+    "Guard Tambour": [
+      [
+        "Guard Tambour",
+        20
+      ]
+    ],
+    "Awesome World": [
+      [
+        "Awesome World",
+        25
+      ]
+    ],
+    "Dancing of Magic": [
+      [
+        "Dancing of Magic",
+        30
+      ]
+    ],
+    "Dancing of Wizardry": [
+      [
+        "Dancing of Magic",
+        30
+      ],
+      [
+        "Dancing of Wizardry",
+        80
+      ]
+    ],
+    "Moving March": [
+      [
+        "Moving March",
+        10
+      ]
+    ],
+    "Swing March": [
+      [
+        "Moving March",
+        10
+      ],
+      [
+        "Swing March",
+        70
+      ]
+    ]
+  }
+}

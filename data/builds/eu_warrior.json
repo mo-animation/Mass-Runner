@@ -1,0 +1,239 @@
+{
+  "id": "eu_warrior",
+  "name": "EU warrior (Warrior / Cleric): tank, fences",
+  "race": "EU",
+  "create": {
+    "model": "CHAR_EU_MAN_KNIGHT",
+    "chest": "ITEM_EU_M_HEAVY_01_BA_A_DEF",
+    "legs": "ITEM_EU_M_HEAVY_01_LA_A_DEF",
+    "shoes": "ITEM_EU_M_HEAVY_01_FA_A_DEF",
+    "weapon": "ITEM_EU_SWORD_01_A_DEF"
+  },
+  "masteries": [
+    "Warrior",
+    "Cleric"
+  ],
+  "final": {
+    "sNormal": [
+      "Sprint Assault",
+      "Shield Crush"
+    ],
+    "bNormal": [
+      "Vital Increase",
+      "Howling Shout"
+    ],
+    "bScript": [],
+    "Healing": [],
+    "Resurrect": [],
+    "Imbue": []
+  },
+  "party_buffs": {
+    "Physical Fence": "party",
+    "Magical Fence": "party",
+    "Protect": "party",
+    "Pain Quota": [
+      "eu_wizard",
+      "eu_warlock",
+      "ch_nuker"
+    ]
+  },
+  "brackets": [
+    {
+      "name": "Lv001-010",
+      "min": 1,
+      "max": 10,
+      "sNormal": [
+        "Shield Trash"
+      ],
+      "bNormal": [],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv011-020",
+      "min": 11,
+      "max": 20,
+      "sNormal": [
+        "Shield Trash"
+      ],
+      "bNormal": [
+        "Vital Increase"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv021-030",
+      "min": 21,
+      "max": 30,
+      "sNormal": [
+        "Sprint Assault",
+        "Shield Trash"
+      ],
+      "bNormal": [
+        "Vital Increase"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv031-040",
+      "min": 31,
+      "max": 40,
+      "sNormal": [
+        "Sprint Assault",
+        "Shield Trash"
+      ],
+      "bNormal": [
+        "Vital Increase"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv041-050",
+      "min": 41,
+      "max": 50,
+      "sNormal": [
+        "Sprint Assault",
+        "Shield Trash"
+      ],
+      "bNormal": [
+        "Vital Increase"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv051-060",
+      "min": 51,
+      "max": 60,
+      "sNormal": [
+        "Sprint Assault",
+        "Shield Crush"
+      ],
+      "bNormal": [
+        "Vital Increase",
+        "Howling Shout"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv061-070",
+      "min": 61,
+      "max": 70,
+      "sNormal": [
+        "Sprint Assault",
+        "Shield Crush"
+      ],
+      "bNormal": [
+        "Vital Increase",
+        "Howling Shout"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv071-080",
+      "min": 71,
+      "max": 80,
+      "sNormal": [
+        "Sprint Assault",
+        "Shield Crush"
+      ],
+      "bNormal": [
+        "Vital Increase",
+        "Howling Shout"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv081-090",
+      "min": 81,
+      "max": 90,
+      "sNormal": [
+        "Sprint Assault",
+        "Shield Crush"
+      ],
+      "bNormal": [
+        "Vital Increase",
+        "Howling Shout"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv091-100",
+      "min": 91,
+      "max": 999,
+      "sNormal": [
+        "Sprint Assault",
+        "Shield Crush"
+      ],
+      "bNormal": [
+        "Vital Increase",
+        "Howling Shout"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    }
+  ],
+  "lines": {
+    "Sprint Assault": [
+      [
+        "Sprint Assault",
+        30
+      ]
+    ],
+    "Shield Trash": [
+      [
+        "Shield Trash",
+        10
+      ]
+    ],
+    "Shield Crush": [
+      [
+        "Shield Trash",
+        10
+      ],
+      [
+        "Shield Crush",
+        60
+      ]
+    ],
+    "Vital Increase": [
+      [
+        "Vital Increase",
+        20
+      ]
+    ],
+    "Howling Shout": [
+      [
+        "Howling Shout",
+        60
+      ]
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+# never uploaded: account passwords and what each PC keeps for itself
+accounts.csv
+data/skip.json
+data/runs/
+data/mass_runner.log
+
+# build leftovers
+__pycache__/
+*.pyc
+_build_*/
+*.old.exe
+*.old*.exe

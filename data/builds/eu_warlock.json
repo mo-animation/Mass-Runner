@@ -1,0 +1,428 @@
+{
+  "id": "eu_warlock",
+  "name": "EU warlock (Warlock / Warrior): curses and DOTs",
+  "race": "EU",
+  "create": {
+    "model": "CHAR_EU_MAN_NECROMENCER",
+    "chest": "ITEM_EU_M_CLOTHES_01_BA_A_DEF",
+    "legs": "ITEM_EU_M_CLOTHES_01_LA_A_DEF",
+    "shoes": "ITEM_EU_M_CLOTHES_01_FA_A_DEF",
+    "weapon": "ITEM_EU_DARKSTAFF_01_A_DEF"
+  },
+  "masteries": [
+    "Warlock",
+    "Warrior"
+  ],
+  "final": {
+    "sNormal": [
+      "Combat Ravage",
+      "Courage Raze",
+      "Physical Ravage",
+      "Blaze",
+      "Toxin Invasion",
+      "Decayed",
+      "Curse Breath",
+      "Curse Explosion",
+      "Death Flower"
+    ],
+    "bNormal": [
+      "Advanced Reflect",
+      "Dusk Armor"
+    ],
+    "bScript": [],
+    "Healing": [],
+    "Resurrect": [],
+    "Imbue": []
+  },
+  "party_buffs": {},
+  "brackets": [
+    {
+      "name": "Lv001-010",
+      "min": 1,
+      "max": 10,
+      "sNormal": [
+        "Blaze",
+        "Toxin",
+        "Blood Flower"
+      ],
+      "bNormal": [],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv011-020",
+      "min": 11,
+      "max": 20,
+      "sNormal": [
+        "Physical Raze",
+        "Blaze",
+        "Toxin",
+        "Decayed",
+        "Blood Flower"
+      ],
+      "bNormal": [
+        "Shadow Armor"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv021-030",
+      "min": 21,
+      "max": 30,
+      "sNormal": [
+        "Physical Raze",
+        "Blaze",
+        "Toxin",
+        "Decayed",
+        "Blood Flower"
+      ],
+      "bNormal": [
+        "Shadow Armor"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv031-040",
+      "min": 31,
+      "max": 40,
+      "sNormal": [
+        "Combat Raze",
+        "Physical Raze",
+        "Blaze",
+        "Toxin",
+        "Decayed",
+        "Curse Breath",
+        "Blood Flower"
+      ],
+      "bNormal": [
+        "Reflect",
+        "Shadow Armor"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv041-050",
+      "min": 41,
+      "max": 50,
+      "sNormal": [
+        "Combat Raze",
+        "Courage Raze",
+        "Physical Raze",
+        "Blaze",
+        "Toxin",
+        "Decayed",
+        "Curse Breath",
+        "Death Flower"
+      ],
+      "bNormal": [
+        "Reflect",
+        "Shadow Armor"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv051-060",
+      "min": 51,
+      "max": 60,
+      "sNormal": [
+        "Combat Raze",
+        "Courage Raze",
+        "Physical Raze",
+        "Blaze",
+        "Toxin Invasion",
+        "Decayed",
+        "Curse Breath",
+        "Curse Explosion",
+        "Death Flower"
+      ],
+      "bNormal": [
+        "Reflect",
+        "Shadow Armor"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv061-070",
+      "min": 61,
+      "max": 70,
+      "sNormal": [
+        "Combat Raze",
+        "Courage Raze",
+        "Physical Ravage",
+        "Blaze",
+        "Toxin Invasion",
+        "Decayed",
+        "Curse Breath",
+        "Curse Explosion",
+        "Death Flower"
+      ],
+      "bNormal": [
+        "Reflect",
+        "Dusk Armor"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv071-080",
+      "min": 71,
+      "max": 80,
+      "sNormal": [
+        "Combat Raze",
+        "Courage Raze",
+        "Physical Ravage",
+        "Blaze",
+        "Toxin Invasion",
+        "Decayed",
+        "Curse Breath",
+        "Curse Explosion",
+        "Death Flower"
+      ],
+      "bNormal": [
+        "Advanced Reflect",
+        "Dusk Armor"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv081-090",
+      "min": 81,
+      "max": 90,
+      "sNormal": [
+        "Combat Ravage",
+        "Courage Raze",
+        "Physical Ravage",
+        "Blaze",
+        "Toxin Invasion",
+        "Decayed",
+        "Curse Breath",
+        "Curse Explosion",
+        "Death Flower"
+      ],
+      "bNormal": [
+        "Advanced Reflect",
+        "Dusk Armor"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv091-100",
+      "min": 91,
+      "max": 999,
+      "sNormal": [
+        "Combat Ravage",
+        "Courage Raze",
+        "Physical Ravage",
+        "Blaze",
+        "Toxin Invasion",
+        "Decayed",
+        "Curse Breath",
+        "Curse Explosion",
+        "Death Flower"
+      ],
+      "bNormal": [
+        "Advanced Reflect",
+        "Dusk Armor"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [],
+      "Imbue": ""
+    }
+  ],
+  "lines": {
+    "Combat Raze": [
+      [
+        "Combat Raze",
+        32
+      ]
+    ],
+    "Combat Ravage": [
+      [
+        "Combat Raze",
+        32
+      ],
+      [
+        "Combat Ravage",
+        84
+      ]
+    ],
+    "Courage Raze": [
+      [
+        "Courage Raze",
+        44
+      ]
+    ],
+    "Physical Raze": [
+      [
+        "Physical Raze",
+        12
+      ]
+    ],
+    "Physical Ravage": [
+      [
+        "Physical Raze",
+        12
+      ],
+      [
+        "Physical Ravage",
+        64
+      ]
+    ],
+    "Blaze": [
+      [
+        "Blaze",
+        4
+      ]
+    ],
+    "Toxin": [
+      [
+        "Toxin",
+        10
+      ]
+    ],
+    "Brand of Poison": [
+      [
+        "Toxin",
+        10
+      ],
+      [
+        "Brand of Poison",
+        122
+      ]
+    ],
+    "Toxin Invasion": [
+      [
+        "Toxin",
+        10
+      ],
+      [
+        "Brand of Poison",
+        122
+      ],
+      [
+        "Toxin Invasion",
+        60
+      ]
+    ],
+    "Decayed": [
+      [
+        "Decayed",
+        20
+      ]
+    ],
+    "Curse Breath": [
+      [
+        "Curse Breath",
+        40
+      ]
+    ],
+    "Curse Explosion": [
+      [
+        "Curse Explosion",
+        60
+      ]
+    ],
+    "Blood Flower": [
+      [
+        "Blood Flower",
+        4
+      ]
+    ],
+    "Splendid Blood Flower": [
+      [
+        "Blood Flower",
+        4
+      ],
+      [
+        "Splendid Blood Flower",
+        124
+      ]
+    ],
+    "Death Flower": [
+      [
+        "Blood Flower",
+        4
+      ],
+      [
+        "Splendid Blood Flower",
+        124
+      ],
+      [
+        "Death Flower",
+        50
+      ]
+    ],
+    "Reflect": [
+      [
+        "Reflect",
+        40
+      ]
+    ],
+    "Blood Counter": [
+      [
+        "Reflect",
+        40
+      ],
+      [
+        "Blood Counter",
+        130
+      ]
+    ],
+    "Advanced Reflect": [
+      [
+        "Reflect",
+        40
+      ],
+      [
+        "Blood Counter",
+        130
+      ],
+      [
+        "Advanced Reflect",
+        80
+      ]
+    ],
+    "Shadow Armor": [
+      [
+        "Shadow Armor",
+        20
+      ]
+    ],
+    "Dusk Armor": [
+      [
+        "Shadow Armor",
+        20
+      ],
+      [
+        "Dusk Armor",
+        70
+      ]
+    ]
+  }
+}

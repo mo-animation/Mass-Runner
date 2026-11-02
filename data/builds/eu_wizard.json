@@ -1,0 +1,470 @@
+{
+  "id": "eu_wizard",
+  "name": "EU wizard (Wizard / Cleric)",
+  "race": "EU",
+  "create": {
+    "model": "CHAR_EU_MAN_NOBLE",
+    "chest": "ITEM_EU_M_CLOTHES_01_BA_A_DEF",
+    "legs": "ITEM_EU_M_CLOTHES_01_LA_A_DEF",
+    "shoes": "ITEM_EU_M_CLOTHES_01_FA_A_DEF",
+    "weapon": "ITEM_EU_TSTAFF_01_A_DEF"
+  },
+  "masteries": [
+    "Wizard",
+    "Cleric"
+  ],
+  "final": {
+    "sNormal": [
+      "Meteor",
+      "Blizzard",
+      "Frozen Spear",
+      "Earth Quake",
+      "Chain Lightning",
+      "Salamander Blow"
+    ],
+    "bNormal": [
+      "Holy Recovery Division",
+      "Earth Fence",
+      "Life Turnover"
+    ],
+    "bScript": [],
+    "Healing": [],
+    "Resurrect": [
+      "Reverse Immolation",
+      "Grad Reverse"
+    ],
+    "Imbue": []
+  },
+  "party_buffs": {},
+  "brackets": [
+    {
+      "name": "Lv001-010",
+      "min": 1,
+      "max": 10,
+      "sNormal": [
+        "Fire Bolt",
+        "Ice Bolt",
+        "Lightning Bolt"
+      ],
+      "bNormal": [],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [
+        "Reverse"
+      ],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv011-020",
+      "min": 11,
+      "max": 20,
+      "sNormal": [
+        "Fire Bolt",
+        "Snow Wind",
+        "Ice Bolt",
+        "Earth Shock",
+        "Lightning Bolt",
+        "Fire Blow"
+      ],
+      "bNormal": [
+        "Life Control"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [
+        "Reverse"
+      ],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv021-030",
+      "min": 21,
+      "max": 30,
+      "sNormal": [
+        "Fire Bolt",
+        "Snow Wind",
+        "Ice Bolt",
+        "Earth Shock",
+        "Lightning Bolt",
+        "Fire Blow"
+      ],
+      "bNormal": [
+        "Earth Barrier",
+        "Life Control"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [
+        "Reverse"
+      ],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv031-040",
+      "min": 31,
+      "max": 40,
+      "sNormal": [
+        "Fire Bolt",
+        "Snow Wind",
+        "Ice Bolt",
+        "Earth Shock",
+        "Lightning Bolt",
+        "Fire Blow"
+      ],
+      "bNormal": [
+        "Recovery Division",
+        "Earth Barrier",
+        "Life Control"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [
+        "Reverse Oblation",
+        "Reverse"
+      ],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv041-050",
+      "min": 41,
+      "max": 50,
+      "sNormal": [
+        "Fire Bolt",
+        "Snow Wind",
+        "Ice Bolt",
+        "Earth Shock",
+        "Lightning Bolt",
+        "Fire Blow"
+      ],
+      "bNormal": [
+        "Recovery Division",
+        "Earth Barrier",
+        "Life Control"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [
+        "Reverse Oblation",
+        "Reverse"
+      ],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv051-060",
+      "min": 51,
+      "max": 60,
+      "sNormal": [
+        "Meteor",
+        "Snow Wind",
+        "Frozen Spear",
+        "Earth Shock",
+        "Chain Lightning",
+        "Fire Blow"
+      ],
+      "bNormal": [
+        "Recovery Division",
+        "Earth Barrier",
+        "Life Control"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [
+        "Reverse Oblation",
+        "Grad Reverse"
+      ],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv061-070",
+      "min": 61,
+      "max": 70,
+      "sNormal": [
+        "Meteor",
+        "Snow Wind",
+        "Frozen Spear",
+        "Earth Shock",
+        "Chain Lightning",
+        "Fire Blow"
+      ],
+      "bNormal": [
+        "Recovery Division",
+        "Earth Barrier",
+        "Life Control"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [
+        "Reverse Oblation",
+        "Grad Reverse"
+      ],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv071-080",
+      "min": 71,
+      "max": 80,
+      "sNormal": [
+        "Meteor",
+        "Blizzard",
+        "Frozen Spear",
+        "Earth Quake",
+        "Chain Lightning",
+        "Salamander Blow"
+      ],
+      "bNormal": [
+        "Recovery Division",
+        "Earth Fence",
+        "Life Turnover"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [
+        "Reverse Oblation",
+        "Grad Reverse"
+      ],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv081-090",
+      "min": 81,
+      "max": 90,
+      "sNormal": [
+        "Meteor",
+        "Blizzard",
+        "Frozen Spear",
+        "Earth Quake",
+        "Chain Lightning",
+        "Salamander Blow"
+      ],
+      "bNormal": [
+        "Holy Recovery Division",
+        "Earth Fence",
+        "Life Turnover"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [
+        "Reverse Immolation",
+        "Grad Reverse"
+      ],
+      "Imbue": ""
+    },
+    {
+      "name": "Lv091-100",
+      "min": 91,
+      "max": 999,
+      "sNormal": [
+        "Meteor",
+        "Blizzard",
+        "Frozen Spear",
+        "Earth Quake",
+        "Chain Lightning",
+        "Salamander Blow"
+      ],
+      "bNormal": [
+        "Holy Recovery Division",
+        "Earth Fence",
+        "Life Turnover"
+      ],
+      "bScript": [],
+      "Healing": [],
+      "Resurrect": [
+        "Reverse Immolation",
+        "Grad Reverse"
+      ],
+      "Imbue": ""
+    }
+  ],
+  "lines": {
+    "Fire Bolt": [
+      [
+        "Fire Bolt",
+        4
+      ]
+    ],
+    "Flame Arrow": [
+      [
+        "Fire Bolt",
+        4
+      ],
+      [
+        "Flame Arrow",
+        124
+      ]
+    ],
+    "Meteor": [
+      [
+        "Fire Bolt",
+        4
+      ],
+      [
+        "Flame Arrow",
+        124
+      ],
+      [
+        "Meteor",
+        60
+      ]
+    ],
+    "Snow Wind": [
+      [
+        "Snow Wind",
+        20
+      ]
+    ],
+    "Blizzard": [
+      [
+        "Snow Wind",
+        20
+      ],
+      [
+        "Blizzard",
+        80
+      ]
+    ],
+    "Ice Bolt": [
+      [
+        "Ice Bolt",
+        4
+      ]
+    ],
+    "Frozen Spear": [
+      [
+        "Ice Bolt",
+        4
+      ],
+      [
+        "Frozen Spear",
+        60
+      ]
+    ],
+    "Earth Shock": [
+      [
+        "Earth Shock",
+        20
+      ]
+    ],
+    "Earth Quake": [
+      [
+        "Earth Shock",
+        20
+      ],
+      [
+        "Earth Quake",
+        80
+      ]
+    ],
+    "Lightning Bolt": [
+      [
+        "Lightning Bolt",
+        4
+      ]
+    ],
+    "Chain Lightning": [
+      [
+        "Lightning Bolt",
+        4
+      ],
+      [
+        "Chain Lightning",
+        60
+      ]
+    ],
+    "Fire Blow": [
+      [
+        "Fire Blow",
+        20
+      ]
+    ],
+    "Salamander Blow": [
+      [
+        "Fire Blow",
+        20
+      ],
+      [
+        "Salamander Blow",
+        80
+      ]
+    ],
+    "Recovery Division": [
+      [
+        "Recovery Division",
+        40
+      ]
+    ],
+    "Holy Recovery Division": [
+      [
+        "Recovery Division",
+        40
+      ],
+      [
+        "Holy Recovery Division",
+        90
+      ]
+    ],
+    "Earth Barrier": [
+      [
+        "Earth Barrier",
+        30
+      ]
+    ],
+    "Earth Fence": [
+      [
+        "Earth Barrier",
+        30
+      ],
+      [
+        "Earth Fence",
+        80
+      ]
+    ],
+    "Life Control": [
+      [
+        "Life Control",
+        20
+      ]
+    ],
+    "Life Turnover": [
+      [
+        "Life Control",
+        20
+      ],
+      [
+        "Life Turnover",
+        72
+      ]
+    ],
+    "Reverse Oblation": [
+      [
+        "Reverse Oblation",
+        40
+      ]
+    ],
+    "Reverse Immolation": [
+      [
+        "Reverse Oblation",
+        40
+      ],
+      [
+        "Reverse Immolation",
+        90
+      ]
+    ],
+    "Reverse": [
+      [
+        "Reverse",
+        10
+      ]
+    ],
+    "Grad Reverse": [
+      [
+        "Reverse",
+        10
+      ],
+      [
+        "Grad Reverse",
+        60
+      ]
+    ]
+  }
+}

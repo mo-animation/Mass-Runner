@@ -1,0 +1,851 @@
+{
+  "id": "ch_nuker",
+  "name": "CH nuker: Fire / Lightning / Cold attacks, Fire imbue, Force buffs",
+  "race": "CH",
+  "create": {
+    "model": "CHAR_CH_MAN_ADVENTURER",
+    "chest": "ITEM_CH_M_HEAVY_01_BA_A_DEF",
+    "legs": "ITEM_CH_M_HEAVY_01_LA_A_DEF",
+    "shoes": "ITEM_CH_M_HEAVY_01_FA_A_DEF",
+    "weapon": "ITEM_CH_SPEAR_01_A_DEF"
+  },
+  "masteries": [
+    "Force",
+    "Cold, Lightning, Fire"
+  ],
+  "final": {
+    "sNormal": [
+      "Flame Wave - HellFire",
+      "Snow Storm - Multi Shot",
+      "Crane's Thunderbolt",
+      "Flame Wave - Disintegrate",
+      "Snow Storm - Double Shot",
+      "Flame Wave - Bomb",
+      "Execution Lion Shout"
+    ],
+    "bNormal": [
+      "Source Therapy",
+      "Cure Therapy - Heaven"
+    ],
+    "bScript": [],
+    "Healing": [
+      "Self Breathing Heal",
+      "Heal - Full Hand"
+    ],
+    "Resurrect": [
+      "Return Rebirth Art",
+      "Resurrection - Spirit Calling"
+    ],
+    "Imbue": [
+      "Cloud Fire force"
+    ]
+  },
+  "party_buffs": {
+    "Magical Buff": "pair",
+    "Physical Buff": "pair"
+  },
+  "brackets": [
+    {
+      "name": "Lv001-010",
+      "min": 1,
+      "max": 10,
+      "sNormal": [],
+      "bNormal": [],
+      "bScript": [],
+      "Healing": [
+        "Self Breathe Heal"
+      ],
+      "Resurrect": [],
+      "Imbue": "River Fire force"
+    },
+    {
+      "name": "Lv011-020",
+      "min": 11,
+      "max": 20,
+      "sNormal": [
+        "Shock Lion Shout"
+      ],
+      "bNormal": [],
+      "bScript": [],
+      "Healing": [
+        "Self Breathe Heal",
+        "Heal - Medical Hand"
+      ],
+      "Resurrect": [
+        "Soul Rebirth Art"
+      ],
+      "Imbue": "River Fire force"
+    },
+    {
+      "name": "Lv021-030",
+      "min": 21,
+      "max": 30,
+      "sNormal": [
+        "Flame Wave - Arrow",
+        "Snow Storm - Ice shot",
+        "Wolf's Thunderbolt",
+        "Shock Lion Shout"
+      ],
+      "bNormal": [
+        "Harmony Therapy"
+      ],
+      "bScript": [],
+      "Healing": [
+        "Self Force Heal",
+        "Heal - Medical Hand"
+      ],
+      "Resurrect": [
+        "Soul Rebirth Art"
+      ],
+      "Imbue": "Extreme Fire force"
+    },
+    {
+      "name": "Lv031-040",
+      "min": 31,
+      "max": 40,
+      "sNormal": [
+        "Flame Wave - Arrow",
+        "Snow Storm - Ice shot",
+        "Wolf's Thunderbolt",
+        "Heaven Lion Shout"
+      ],
+      "bNormal": [
+        "Harmony Therapy"
+      ],
+      "bScript": [],
+      "Healing": [
+        "Self Force Heal",
+        "Heal - Ghost Hand"
+      ],
+      "Resurrect": [
+        "Ghost Rebirth Art",
+        "Resurrection - Spirit Binding"
+      ],
+      "Imbue": "Extreme Fire force"
+    },
+    {
+      "name": "Lv041-050",
+      "min": 41,
+      "max": 50,
+      "sNormal": [
+        "Flame Wave - Burning",
+        "Snow Storm - Ice rain",
+        "Tiger's Thunderbolt",
+        "Snow Storm - Ice shot",
+        "Flame Wave - Arrow",
+        "Heaven Lion Shout"
+      ],
+      "bNormal": [
+        "Adaptation Therapy"
+      ],
+      "bScript": [],
+      "Healing": [
+        "Self Wounds Heal",
+        "Heal - Ghost Hand"
+      ],
+      "Resurrect": [
+        "Ghost Rebirth Art",
+        "Resurrection - Spirit Binding"
+      ],
+      "Imbue": "Poison Fire force"
+    },
+    {
+      "name": "Lv051-060",
+      "min": 51,
+      "max": 60,
+      "sNormal": [
+        "Flame Wave - Burning",
+        "Snow Storm - Ice rain",
+        "Tiger's Thunderbolt",
+        "Flame Wave - Wide",
+        "Snow Storm - Ice shot",
+        "Flame Wave - Arrow",
+        "Earth Lion Shout"
+      ],
+      "bNormal": [
+        "Adaptation Therapy"
+      ],
+      "bScript": [],
+      "Healing": [
+        "Self Wounds Heal",
+        "Heal - Taoist Hand"
+      ],
+      "Resurrect": [
+        "Spirit Rebirth Art",
+        "Resurrection - Spirit Binding"
+      ],
+      "Imbue": "Poison Fire force"
+    },
+    {
+      "name": "Lv061-070",
+      "min": 61,
+      "max": 70,
+      "sNormal": [
+        "Flame Wave - Burning",
+        "Snow Storm - Ice rain",
+        "Horse's Thunderbolt",
+        "Flame Wave - Wide",
+        "Snow Storm - Double Shot",
+        "Flame Wave - Bomb",
+        "Earth Lion Shout"
+      ],
+      "bNormal": [
+        "Whole Therapy"
+      ],
+      "bScript": [],
+      "Healing": [
+        "Self Vital Heal",
+        "Heal - Taoist Hand"
+      ],
+      "Resurrect": [
+        "Spirit Rebirth Art",
+        "Resurrection - Spirit Binding"
+      ],
+      "Imbue": "Soul Fire force"
+    },
+    {
+      "name": "Lv071-080",
+      "min": 71,
+      "max": 80,
+      "sNormal": [
+        "Flame Wave - Burning",
+        "Snow Storm - Ice rain",
+        "Horse's Thunderbolt",
+        "Flame Wave - Wide",
+        "Snow Storm - Double Shot",
+        "Flame Wave - Bomb",
+        "Power Lion Shout"
+      ],
+      "bNormal": [
+        "Whole Therapy",
+        "Cure Therapy - Heaven"
+      ],
+      "bScript": [],
+      "Healing": [
+        "Self Vital Heal",
+        "Heal - Mysterious Hand"
+      ],
+      "Resurrect": [
+        "Return Rebirth Art",
+        "Resurrection - Spirit Binding"
+      ],
+      "Imbue": "Soul Fire force"
+    },
+    {
+      "name": "Lv081-090",
+      "min": 81,
+      "max": 90,
+      "sNormal": [
+        "Flame Wave - HellFire",
+        "Snow Storm - Multi Shot",
+        "Crane's Thunderbolt",
+        "Flame Wave - Wide",
+        "Snow Storm - Double Shot",
+        "Flame Wave - Bomb",
+        "Power Lion Shout"
+      ],
+      "bNormal": [
+        "Source Therapy",
+        "Cure Therapy - Heaven"
+      ],
+      "bScript": [],
+      "Healing": [
+        "Self Vital Heal",
+        "Heal - Mysterious Hand"
+      ],
+      "Resurrect": [
+        "Return Rebirth Art",
+        "Resurrection - Spirit Calling"
+      ],
+      "Imbue": "Soul Fire force"
+    },
+    {
+      "name": "Lv091-100",
+      "min": 91,
+      "max": 999,
+      "sNormal": [
+        "Flame Wave - HellFire",
+        "Snow Storm - Multi Shot",
+        "Crane's Thunderbolt",
+        "Flame Wave - Disintegrate",
+        "Snow Storm - Double Shot",
+        "Flame Wave - Bomb",
+        "Execution Lion Shout"
+      ],
+      "bNormal": [
+        "Source Therapy",
+        "Cure Therapy - Heaven"
+      ],
+      "bScript": [],
+      "Healing": [
+        "Self Breathing Heal",
+        "Heal - Full Hand"
+      ],
+      "Resurrect": [
+        "Return Rebirth Art",
+        "Resurrection - Spirit Calling"
+      ],
+      "Imbue": "Cloud Fire force"
+    }
+  ],
+  "lines": {
+    "Flame Wave - Arrow": [
+      [
+        "Flame Wave - Arrow",
+        30
+      ]
+    ],
+    "Flame Wave - Burning": [
+      [
+        "Flame Wave - Arrow",
+        30
+      ],
+      [
+        "Flame Wave - Burning",
+        43
+      ]
+    ],
+    "Flame Wave - HellFire": [
+      [
+        "Flame Wave - Arrow",
+        30
+      ],
+      [
+        "Flame Wave - Burning",
+        43
+      ],
+      [
+        "Flame Wave - HellFire",
+        83
+      ]
+    ],
+    "Snow Storm - Ice shot": [
+      [
+        "Snow Storm - Ice shot",
+        30
+      ]
+    ],
+    "Snow Storm - Ice rain": [
+      [
+        "Snow Storm - Ice shot",
+        30
+      ],
+      [
+        "Snow Storm - Ice rain",
+        50
+      ]
+    ],
+    "Snow Storm - Multi Shot": [
+      [
+        "Snow Storm - Ice shot",
+        30
+      ],
+      [
+        "Snow Storm - Ice rain",
+        50
+      ],
+      [
+        "Snow Storm - Multi Shot",
+        90
+      ]
+    ],
+    "Wolf's Thunderbolt": [
+      [
+        "Wolf's Thunderbolt",
+        30
+      ]
+    ],
+    "Tiger's Thunderbolt": [
+      [
+        "Wolf's Thunderbolt",
+        30
+      ],
+      [
+        "Tiger's Thunderbolt",
+        50
+      ]
+    ],
+    "Horse's Thunderbolt": [
+      [
+        "Wolf's Thunderbolt",
+        30
+      ],
+      [
+        "Tiger's Thunderbolt",
+        50
+      ],
+      [
+        "Horse's Thunderbolt",
+        70
+      ]
+    ],
+    "Crane's Thunderbolt": [
+      [
+        "Wolf's Thunderbolt",
+        30
+      ],
+      [
+        "Tiger's Thunderbolt",
+        50
+      ],
+      [
+        "Horse's Thunderbolt",
+        70
+      ],
+      [
+        "Crane's Thunderbolt",
+        90
+      ]
+    ],
+    "Flame Wave - Wide": [
+      [
+        "Flame Wave - Arrow",
+        30
+      ],
+      [
+        "Flame Wave - Burning",
+        43
+      ],
+      [
+        "Flame Wave - Wide",
+        56
+      ]
+    ],
+    "Flame Wave - Disintegrate": [
+      [
+        "Flame Wave - Arrow",
+        30
+      ],
+      [
+        "Flame Wave - Burning",
+        43
+      ],
+      [
+        "Flame Wave - Wide",
+        56
+      ],
+      [
+        "Flame Wave - Disintegrate",
+        96
+      ]
+    ],
+    "Snow Storm - Double Shot": [
+      [
+        "Snow Storm - Ice shot",
+        30
+      ],
+      [
+        "Snow Storm - Double Shot",
+        70
+      ]
+    ],
+    "Flame Wave - Bomb": [
+      [
+        "Flame Wave - Arrow",
+        30
+      ],
+      [
+        "Flame Wave - Bomb",
+        70
+      ]
+    ],
+    "Shock Lion Shout": [
+      [
+        "Shock Lion Shout",
+        17
+      ]
+    ],
+    "Heaven Lion Shout": [
+      [
+        "Shock Lion Shout",
+        17
+      ],
+      [
+        "Heaven Lion Shout",
+        37
+      ]
+    ],
+    "Earth Lion Shout": [
+      [
+        "Shock Lion Shout",
+        17
+      ],
+      [
+        "Heaven Lion Shout",
+        37
+      ],
+      [
+        "Earth Lion Shout",
+        57
+      ]
+    ],
+    "Power Lion Shout": [
+      [
+        "Shock Lion Shout",
+        17
+      ],
+      [
+        "Heaven Lion Shout",
+        37
+      ],
+      [
+        "Earth Lion Shout",
+        57
+      ],
+      [
+        "Power Lion Shout",
+        77
+      ]
+    ],
+    "Execution Lion Shout": [
+      [
+        "Shock Lion Shout",
+        17
+      ],
+      [
+        "Heaven Lion Shout",
+        37
+      ],
+      [
+        "Earth Lion Shout",
+        57
+      ],
+      [
+        "Power Lion Shout",
+        77
+      ],
+      [
+        "Execution Lion Shout",
+        98
+      ]
+    ],
+    "Harmony Therapy": [
+      [
+        "Harmony Therapy",
+        23
+      ]
+    ],
+    "Adaptation Therapy": [
+      [
+        "Harmony Therapy",
+        23
+      ],
+      [
+        "Adaptation Therapy",
+        43
+      ]
+    ],
+    "Whole Therapy": [
+      [
+        "Harmony Therapy",
+        23
+      ],
+      [
+        "Adaptation Therapy",
+        43
+      ],
+      [
+        "Whole Therapy",
+        63
+      ]
+    ],
+    "Source Therapy": [
+      [
+        "Harmony Therapy",
+        23
+      ],
+      [
+        "Adaptation Therapy",
+        43
+      ],
+      [
+        "Whole Therapy",
+        63
+      ],
+      [
+        "Source Therapy",
+        83
+      ]
+    ],
+    "Cure Therapy - Heaven": [
+      [
+        "Cure Therapy - Heaven",
+        76
+      ]
+    ],
+    "Self Breathe Heal": [
+      [
+        "Self Breathe Heal",
+        5
+      ]
+    ],
+    "Self Force Heal": [
+      [
+        "Self Breathe Heal",
+        5
+      ],
+      [
+        "Self Force Heal",
+        25
+      ]
+    ],
+    "Self Wounds Heal": [
+      [
+        "Self Breathe Heal",
+        5
+      ],
+      [
+        "Self Force Heal",
+        25
+      ],
+      [
+        "Self Wounds Heal",
+        45
+      ]
+    ],
+    "Self Vital Heal": [
+      [
+        "Self Breathe Heal",
+        5
+      ],
+      [
+        "Self Force Heal",
+        25
+      ],
+      [
+        "Self Wounds Heal",
+        45
+      ],
+      [
+        "Self Vital Heal",
+        65
+      ]
+    ],
+    "Self Breathing Heal": [
+      [
+        "Self Breathe Heal",
+        5
+      ],
+      [
+        "Self Force Heal",
+        25
+      ],
+      [
+        "Self Wounds Heal",
+        45
+      ],
+      [
+        "Self Vital Heal",
+        65
+      ],
+      [
+        "Self Breathing Heal",
+        98
+      ]
+    ],
+    "Heal - Medical Hand": [
+      [
+        "Heal - Medical Hand",
+        12
+      ]
+    ],
+    "Heal - Ghost Hand": [
+      [
+        "Heal - Medical Hand",
+        12
+      ],
+      [
+        "Heal - Ghost Hand",
+        32
+      ]
+    ],
+    "Heal - Taoist Hand": [
+      [
+        "Heal - Medical Hand",
+        12
+      ],
+      [
+        "Heal - Ghost Hand",
+        32
+      ],
+      [
+        "Heal - Taoist Hand",
+        52
+      ]
+    ],
+    "Heal - Mysterious Hand": [
+      [
+        "Heal - Medical Hand",
+        12
+      ],
+      [
+        "Heal - Ghost Hand",
+        32
+      ],
+      [
+        "Heal - Taoist Hand",
+        52
+      ],
+      [
+        "Heal - Mysterious Hand",
+        72
+      ]
+    ],
+    "Heal - Full Hand": [
+      [
+        "Heal - Medical Hand",
+        12
+      ],
+      [
+        "Heal - Ghost Hand",
+        32
+      ],
+      [
+        "Heal - Taoist Hand",
+        52
+      ],
+      [
+        "Heal - Mysterious Hand",
+        72
+      ],
+      [
+        "Heal - Full Hand",
+        94
+      ]
+    ],
+    "Soul Rebirth Art": [
+      [
+        "Soul Rebirth Art",
+        17
+      ]
+    ],
+    "Ghost Rebirth Art": [
+      [
+        "Soul Rebirth Art",
+        17
+      ],
+      [
+        "Ghost Rebirth Art",
+        37
+      ]
+    ],
+    "Spirit Rebirth Art": [
+      [
+        "Soul Rebirth Art",
+        17
+      ],
+      [
+        "Ghost Rebirth Art",
+        37
+      ],
+      [
+        "Spirit Rebirth Art",
+        57
+      ]
+    ],
+    "Return Rebirth Art": [
+      [
+        "Soul Rebirth Art",
+        17
+      ],
+      [
+        "Ghost Rebirth Art",
+        37
+      ],
+      [
+        "Spirit Rebirth Art",
+        57
+      ],
+      [
+        "Return Rebirth Art",
+        77
+      ]
+    ],
+    "Resurrection - Spirit Binding": [
+      [
+        "Resurrection - Spirit Binding",
+        40
+      ]
+    ],
+    "Resurrection - Spirit Calling": [
+      [
+        "Resurrection - Spirit Binding",
+        40
+      ],
+      [
+        "Resurrection - Spirit Calling",
+        90
+      ]
+    ],
+    "River Fire force": [
+      [
+        "River Fire force",
+        5
+      ]
+    ],
+    "Extreme Fire force": [
+      [
+        "River Fire force",
+        5
+      ],
+      [
+        "Extreme Fire force",
+        25
+      ]
+    ],
+    "Poison Fire force": [
+      [
+        "River Fire force",
+        5
+      ],
+      [
+        "Extreme Fire force",
+        25
+      ],
+      [
+        "Poison Fire force",
+        45
+      ]
+    ],
+    "Soul Fire force": [
+      [
+        "River Fire force",
+        5
+      ],
+      [
+        "Extreme Fire force",
+        25
+      ],
+      [
+        "Poison Fire force",
+        45
+      ],
+      [
+        "Soul Fire force",
+        65
+      ]
+    ],
+    "Cloud Fire force": [
+      [
+        "River Fire force",
+        5
+      ],
+      [
+        "Extreme Fire force",
+        25
+      ],
+      [
+        "Poison Fire force",
+        45
+      ],
+      [
+        "Soul Fire force",
+        65
+      ],
+      [
+        "Cloud Fire force",
+        98
+      ]
+    ]
+  }
+}
