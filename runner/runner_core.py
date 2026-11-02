@@ -66,6 +66,7 @@ DEFAULT_SETTINGS = {
 
 EVENT_TYPES = ('MoDungeon',)
 
+PLUGIN_WAIT = 45            # seconds in the game without a single MoDungeon log line = it did not load
 NO_ENTRIES_WAIT = 90        # after "No more entries" MoDungeon uses a return scroll and empties the pet
 # MoDungeon log lines (plugin v4.14) -> result, note, seconds before the bot is closed (None = close_delay_seconds)
 MODUNGEON_LINES = [
@@ -169,6 +170,7 @@ class Char:
         self.restarts = 0
         self.log_pos = 0            # phBot log size when it opened: only newer lines count
         self.finish = None          # (result, note, close at)
+        self.plugin_seen = False    # a MoDungeon line came in its log since it opened
         self.state = ''
         self.level = 0
 
@@ -612,6 +614,7 @@ class Runner:
             pid = found.get(c.character.lower())
             if pid and not self.alive(c):
                 c.proc, c.launched_at, c.in_game_at = RunningBot(pid), time.time(), time.time()
+                c.plugin_seen = True    # its plugin lines came before the runner read its log
                 c.log_pos = log_size(self.s, c)
                 c.state = 'open (taken over)'
 
@@ -794,6 +797,8 @@ class Runner:
                 continue
             c.state = 'dead' if live['dead'] else 'playing'
             for line in new_log_lines(s, c):
+                if '[MoDungeon]' in line:
+                    c.plugin_seen = True
                 for rx, result, note, wait in MODUNGEON_LINES:
                     m = rx.search(line)
                     if m:
@@ -804,6 +809,19 @@ class Runner:
                         c.state = result + (' - going to town' if wait > 30 else ' - closing')
                         self.log('%s: %s' % (c.character, line.strip()))
                         break
+            if (ev or {}).get('type') == 'MoDungeon' and not c.plugin_seen and not c.finish and \
+                    now - c.in_game_at > PLUGIN_WAIT:
+                # phBot now and then joins the game without its plugins (fnuk38 / 39 on 2 Nov): open it again
+                if c.restarts < s['max_restarts']:
+                    c.restarts += 1
+                    self.log('%s: MoDungeon did not load - opening again (%d/%d)' % (
+                        c.character, c.restarts, s['max_restarts']))
+                    self.close(c, 'MoDungeon did not load - opening again')
+                    c.queued = True
+                else:
+                    self.set_result(c, 'failed', 'MoDungeon did not load')
+                    self.close(c, 'MoDungeon did not load')
+                continue
             timeout = int((ev or {}).get('timeout_minutes') or 0)
             if not c.finish and timeout and now - c.in_game_at > timeout * 60:
                 self.set_result(c, 'failed', 'timeout %d min' % timeout)
@@ -824,10 +842,10 @@ class Runner:
     def launch(self, c, ev):
         s = self.s
         c.queued = False
-        c.finish, c.in_game_at, c.level = None, 0.0, 0
+        c.finish, c.in_game_at, c.level, c.plugin_seen = None, 0.0, 0, False
         pid = running_phbots(s).get(c.character.lower())
         if pid:
-            c.proc, c.launched_at = RunningBot(pid), time.time()
+            c.proc, c.launched_at, c.plugin_seen = RunningBot(pid), time.time(), True
             c.log_pos = log_size(s, c)
             c.state = 'already open - taken over'
             self.log('%s is already open in phBot - taken over' % c.character)

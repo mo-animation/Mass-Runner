@@ -45,6 +45,8 @@ def main():
         os.environ['FAKE_LOW'] = 'fnuk04'
         os.environ['FAKE_PLAYED'] = 'fnuk06'
         os.environ['FAKE_NO_QUIT'] = 'fnuk07'      # ignores the graceful close: terminated after QUIT_WAIT
+        os.environ['FAKE_NO_PLUGIN'] = 'fnuk08'    # the first time in the game without MoDungeon: opened again
+        rc.PLUGIN_WAIT = 4
         logs = []
         r = rc.Runner(settings, log=logs.append)
         assert [c.character for c in r.chars][0] == 'fnuk01' and len(r.chars) == 12, 'escort left out'
@@ -65,6 +67,7 @@ def main():
         assert most <= 3, 'more than 3 open: %d' % most
         quit = sorted(f[5:-4] for f in os.listdir(phbot) if f.startswith('quit_'))
         assert quit == ['fnuk%02d' % i for i in range(1, 11) if i != 7], quit     # closed by the graceful close
+        assert any('fnuk08: MoDungeon did not load - opening again' in l for l in logs), 'fnuk08 not reopened'
         assert not r.closing, 'bots still closing'
         alive = [c.character for c in r.chars if c.proc and rc.process_alive(c.proc.pid)]
         assert not alive, alive

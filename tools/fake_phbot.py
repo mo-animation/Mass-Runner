@@ -27,8 +27,13 @@ put(0x137, bytes([95 if char in os.environ.get('FAKE_LOW', '').split(',') else 1
 put(0x02d, b'\x01')
 put(0x02f, b'\x01')
 time.sleep(1.5)
+no_plugin = char in os.environ.get('FAKE_NO_PLUGIN', '').split(',') and not os.path.isfile('noplugin_%s.txt' % char)
+if no_plugin:                               # the first time: in the game without MoDungeon (no line of it)
+    open('noplugin_%s.txt' % char, 'w').close()
 with open(os.path.join('Log', 'Elysian_%s_Log.txt' % char), 'a') as f:
-    if char in os.environ.get('FAKE_PLAYED', '').split(','):     # already played today: the entry NPC refuses
+    if no_plugin:
+        f.write('[10:00:00] Character successfully joined the game\n')
+    elif char in os.environ.get('FAKE_PLAYED', '').split(','):     # already played today: the entry NPC refuses
         f.write('[10:00:00] [MoDungeon] debug: NPC refused, code 271c\n[10:00:00] [MoDungeon] No teleport after '
                 'talking to the NPC (dungeon full?) - trying again every 3s until it works (try 2).\n')
     else:
