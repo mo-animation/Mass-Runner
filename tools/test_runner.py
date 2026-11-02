@@ -2,7 +2,8 @@
 
 py -I tools/test_runner.py
 12 characters, 10 in the finished list, one of them level 95: at most 3 open at a time, the level-95 one is
-closed as not ready, the others write MoDungeon's "All 1 run(s) done" line and are closed as done.
+closed as not ready, fnuk06 gets the entry NPC's 271c (played today) and is closed as no entries, the others
+write MoDungeon's "All 1 run(s) done" line and are closed as done.
 """
 import json
 import os
@@ -42,6 +43,7 @@ def main():
             'runs_dir': os.path.join(work, 'runs'), 'skip': os.path.join(work, 'skip.json'),
             'close_delay_seconds': 0.5})
         os.environ['FAKE_LOW'] = 'fnuk04'
+        os.environ['FAKE_PLAYED'] = 'fnuk06'
         logs = []
         r = rc.Runner(settings, log=logs.append)
         assert [c.character for c in r.chars][0] == 'fnuk01' and len(r.chars) == 12, 'escort left out'
@@ -61,7 +63,8 @@ def main():
         print('results:', {k: v['result'] for k, v in sorted(res.items())})
         assert most <= 3, 'more than 3 open: %d' % most
         assert res['fnuk04']['result'] == 'not ready', res['fnuk04']
-        assert all(res['fnuk%02d' % i]['result'] == 'done' for i in range(1, 11) if i != 4)
+        assert res['fnuk06']['result'] == 'no entries', res['fnuk06']
+        assert all(res['fnuk%02d' % i]['result'] == 'done' for i in range(1, 11) if i not in (4, 6))
         assert 'fnuk11' not in res and 'fnuk12' not in res, 'not finished characters were opened'
         prof = rc.read_json(os.path.join(phbot, 'Config', 'Elysian_fnuk01.json'))
         am = prof['Auto Mastery']

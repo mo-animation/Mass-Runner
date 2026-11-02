@@ -66,17 +66,21 @@ DEFAULT_SETTINGS = {
 
 EVENT_TYPES = ('MoDungeon',)
 
-# MoDungeon log lines (plugin v4.14) -> result
-MODUNGEON_LINES = [
-    (re.compile(r'\[MoDungeon\] All \d+ run\(s\) done'), 'done', ''),
-    (re.compile(r'\[MoDungeon\] No more entries'), 'no entries', 'entry limit reached'),
-    (re.compile(r'\[MoDungeon\] Character died - stopped'), 'failed', 'died'),
-    (re.compile(r'\[MoDungeon\] Record all 3 columns first'), 'failed', 'the MoDungeon profile has no route'),
-    (re.compile(r'\[MoDungeon\] Did not get into the dungeon'), 'failed', 'did not get into the dungeon'),
-    (re.compile(r'\[MoDungeon\] Profile "(.*)" not found'), 'failed', 'MoDungeon profile not found'),
-    (re.compile(r'\[MoDungeon\] Error: (.*)'), 'failed', 'MoDungeon error'),
-]
 NO_ENTRIES_WAIT = 90        # after "No more entries" MoDungeon uses a return scroll and empties the pet
+# MoDungeon log lines (plugin v4.14) -> result, note, seconds before the bot is closed (None = close_delay_seconds)
+MODUNGEON_LINES = [
+    (re.compile(r'\[MoDungeon\] All \d+ run\(s\) done'), 'done', '', None),
+    (re.compile(r'\[MoDungeon\] No more entries'), 'no entries', 'entry limit reached', NO_ENTRIES_WAIT),
+    # the entry NPC refuses with 271c when the character already played the dungeon today (Elysian logs: every
+    # 271c came after a finished run the same day; 291c = full for now, it got in later). MoDungeon only retries.
+    (re.compile(r'\[MoDungeon\] debug: NPC refused, code 271c'), 'no entries', 'already played today (NPC code 271c)',
+     None),
+    (re.compile(r'\[MoDungeon\] Character died - stopped'), 'failed', 'died', None),
+    (re.compile(r'\[MoDungeon\] Record all 3 columns first'), 'failed', 'the MoDungeon profile has no route', None),
+    (re.compile(r'\[MoDungeon\] Did not get into the dungeon'), 'failed', 'did not get into the dungeon', None),
+    (re.compile(r'\[MoDungeon\] Profile "(.*)" not found'), 'failed', 'MoDungeon profile not found', None),
+    (re.compile(r'\[MoDungeon\] Error: (.*)'), 'failed', 'MoDungeon error', None),
+]
 
 
 # ---------------------------------------------------------------- files
@@ -726,14 +730,14 @@ class Runner:
                 continue
             c.state = 'dead' if live['dead'] else 'playing'
             for line in new_log_lines(s, c):
-                for rx, result, note in MODUNGEON_LINES:
+                for rx, result, note, wait in MODUNGEON_LINES:
                     m = rx.search(line)
                     if m:
                         if result == 'failed' and m.groups():
                             note = '%s: %s' % (note, m.group(1))
-                        wait = NO_ENTRIES_WAIT if result == 'no entries' else s['close_delay_seconds']
+                        wait = s['close_delay_seconds'] if wait is None else wait
                         c.finish = (result, note, now + wait)
-                        c.state = result + (' - closing' if result != 'no entries' else ' - going to town')
+                        c.state = result + (' - going to town' if wait > 30 else ' - closing')
                         self.log('%s: %s' % (c.character, line.strip()))
                         break
             timeout = int((ev or {}).get('timeout_minutes') or 0)

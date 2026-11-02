@@ -28,5 +28,9 @@ put(0x02d, b'\x01')
 put(0x02f, b'\x01')
 time.sleep(1.5)
 with open(os.path.join('Log', 'Elysian_%s_Log.txt' % char), 'a') as f:
-    f.write('[10:00:00] [MoDungeon] Run 1 finished (1/1).\n[10:00:00] [MoDungeon] All 1 run(s) done - stopping.\n')
+    if char in os.environ.get('FAKE_PLAYED', '').split(','):     # already played today: the entry NPC refuses
+        f.write('[10:00:00] [MoDungeon] debug: NPC refused, code 271c\n[10:00:00] [MoDungeon] No teleport after '
+                'talking to the NPC (dungeon full?) - trying again every 3s until it works (try 2).\n')
+    else:
+        f.write('[10:00:00] [MoDungeon] Run 1 finished (1/1).\n[10:00:00] [MoDungeon] All 1 run(s) done - stopping.\n')
 time.sleep(600)

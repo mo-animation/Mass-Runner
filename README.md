@@ -17,6 +17,8 @@ closed (phBot terminated) and the next one opens in its place, until everyone ha
 3. MoDungeon starts by itself in the game. Mass Runner reads phBot's log: `All N run(s) done` (written after the
    pet's items went to the inventory) = done → the bot is closed 5 s later.
    `No more entries` = done (entry limit), closed 90 s later after MoDungeon's return scroll.
+   `NPC refused, code 271c` = the entry NPC says the character already played today (MoDungeon would only retry):
+   "no entries", closed 5 s later. (291c = the dungeon is full for now: MoDungeon retries, it gets in later.)
    Died / no route / did not get in / error / no result after the event's timeout = failed, closed.
 4. A character below `min_level` (100) is closed again as **not ready**. A character already logged in from
    another phBot folder (the farm bots) is never opened (it would be kicked there).
