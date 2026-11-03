@@ -665,6 +665,10 @@ class Runner:
             return
         self.warned_finished = False
         self.finished = dict(local)
+        if isinstance(data, dict) and 'characters' not in data:
+            # the file picked is MassLeveler Escort's own data/progress.json ({char: state}), not finished.json
+            self.finished.update({ch: 0 for ch, v in data.items() if v in ('done', 'finished')})
+            return
         self.finished.update({ch: int((v or {}).get('level') or 0)
                               for ch, v in ((data or {}).get('characters') or {}).items()})
 
