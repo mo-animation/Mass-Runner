@@ -173,6 +173,7 @@ class Char:
         self.log_pos = 0            # phBot log size when it opened: only newer lines count
         self.finish = None          # (result, note, close at)
         self.plugin_seen = False    # a MoDungeon line came in its log since it opened
+        self.force_open = False     # Restart bot: opens even while the runner is stopped
         self.connected_once = False # phBot reached the game server since it opened
         self.state = ''
         self.level = 0
@@ -788,6 +789,21 @@ class Runner:
                 c.queued = False
             self.save_skip()
 
+    def restart_bot(self, c):
+        """right-click Restart bot: close its phBot (graceful, then terminate) and open it again first in line, also
+        while the runner is stopped; its tries and result stay as they are (a bot stuck at the login)"""
+        with self.lock:
+            if c.character in self.results:
+                self.log('%s already has a result - use "Play again" to play it again' % c.character)
+                return
+            if self.ready(c):
+                self.log('%s is not opened (%s)' % (c.character, self.ready(c)))
+                return
+            if self.alive(c):
+                self.close(c, 'restarting')
+            c.queued, c.force_open, c.state = True, True, 'restarting'
+            self.log('%s: bot restarted by hand' % c.character)
+
     def reset_result(self, c):
         with self.lock:
             self.results.pop(c.character, None)
@@ -962,9 +978,10 @@ class Runner:
                 self.close(c, 'timeout - closed')
                 self.log('%s still not done after %d min - closed' % (c.character, timeout))
         # open the next one
-        if self.running and now >= self.next_launch and self.open_count() < int(s['max_open']):
-            nxt = next((c for c in self.chars if c.queued and not self.alive(c) and not self.ready(c)
-                        and c.character not in self.results), None)
+        want = [c for c in self.chars if c.queued and not self.alive(c) and not self.ready(c)
+                and c.character not in self.results and (self.running or c.force_open)]
+        if want and now >= self.next_launch and self.open_count() < int(s['max_open']):
+            nxt = next((c for c in want if c.force_open), want[0])     # a bot restarted by hand goes first
             if nxt and not self.game_files_free():
                 self.next_launch = now + LOCK_RECHECK   # a client started now would crash: look again soon
             elif nxt:
@@ -979,6 +996,7 @@ class Runner:
         s = self.s
         c.queued = False
         c.finish, c.in_game_at, c.level, c.plugin_seen, c.connected_once = None, 0.0, 0, False, False
+        c.force_open = False
         pid = running_phbots(s).get(c.character.lower())
         if pid:
             c.proc, c.launched_at, c.plugin_seen = RunningBot(pid), time.time(), True

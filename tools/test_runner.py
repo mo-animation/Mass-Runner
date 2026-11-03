@@ -105,5 +105,55 @@ def main():
         shutil.rmtree(work, ignore_errors=True)
 
 
+
+def restart_test():
+    """right-click Restart bot with the runner stopped: it opens anyway; restarting an open bot closes it and
+    opens it again; the character then plays as usual"""
+    work = tempfile.mkdtemp(prefix='mr_restart_')
+    try:
+        phbot = os.path.join(work, 'phBot')
+        os.makedirs(os.path.join(phbot, 'Config'))
+        os.makedirs(os.path.join(phbot, 'Log'))
+        with open(os.path.join(work, 'accounts.csv'), 'w') as f:
+            f.write('username,password,passcode,character\nu20,p,1,fnuk20\n')
+        settings = os.path.join(work, 'settings.json')
+        rc.write_json(settings, {
+            'phbot_dir': phbot, 'phbot_dirs': [], 'phbot_command': [sys.executable, os.path.join(ROOT, 'tools',
+                                                                                              'fake_phbot.py')],
+            'login_args': ['--x'], 'accounts_csv': os.path.join(work, 'accounts.csv'), 'only_finished': False,
+            'finished_file': os.path.join(work, 'none.json'), 'launch_delay_seconds': 0.5,
+            'builds_dir': os.path.join(ROOT, 'data', 'builds'), 'templates_dir': os.path.join(ROOT, 'templates'),
+            'runs_dir': os.path.join(work, 'runs'), 'skip': os.path.join(work, 'skip.json'),
+            'close_delay_seconds': 0.5})
+        os.environ['FAKE_NO_CONNECT'] = 'fnuk20'        # the first bot never connects (stuck at the login)
+        logs = []
+        r = rc.Runner(settings, log=logs.append)
+        r._ensure_loop()
+        c = r.chars[0]
+        r.restart_bot(c)                                # runner stopped: opens anyway
+        t0 = time.time()
+        while time.time() - t0 < 20 and not r.alive(c):
+            time.sleep(0.2)
+        assert r.alive(c), 'not opened while stopped: %s' % logs
+        first = c.proc.pid
+        time.sleep(1)
+        r.restart_bot(c)                                # stuck: close it and open it again
+        t0 = time.time()
+        while time.time() - t0 < 40 and 'fnuk20' not in r.results:
+            time.sleep(0.3)
+        r.shutdown()
+        opens = [l for l in logs if l.startswith('open fnuk20')]
+        assert len(opens) == 2, logs
+        assert r.results.get('fnuk20', {}).get('result') == 'done', (r.results, logs)
+        assert not rc.process_alive(first), 'the stuck bot is still open'
+        assert c.restarts == 0, 'Restart bot used a try'
+        print('OK - Restart bot')
+    finally:
+        os.environ.pop('FAKE_NO_CONNECT', None)
+        time.sleep(1)
+        shutil.rmtree(work, ignore_errors=True)
+
+
 if __name__ == '__main__':
     main()
+    restart_test()

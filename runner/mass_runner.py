@@ -330,6 +330,7 @@ class App:
         self.menu.add_command(label='Untick (never opens)', command=lambda: self.each(lambda c: self.runner.set_skip(c, True)))
         self.menu.add_separator()
         self.menu.add_command(label='Play again (forget its result)', command=lambda: self.each(self.runner.reset_result))
+        self.menu.add_command(label='Restart bot', command=lambda: self.each(self.runner.restart_bot))
         self.menu.add_command(label='Close its bot', command=lambda: self.each(lambda c: self.runner.close(c, 'closed by hand')))
         self.menu.add_separator()
         self.menu.add_command(label='Show phBot', command=lambda: self.each(lambda c: c.proc and rc.show_bot(c.proc.pid, True)))
