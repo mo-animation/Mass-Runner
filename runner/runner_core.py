@@ -54,6 +54,7 @@ DEFAULT_SETTINGS = {
     'max_open': 7,
     'launch_delay_seconds': 20,
     'login_timeout_minutes': 4,
+    'login_restarts': 10,               # a bot stuck at the login is restarted this often, then failed
     'start_fail_wait_minutes': 15,      # a bot whose game client never came up: no new bot for this long
     'max_restarts': 3,                  # a bot that closes by itself / never gets in the game is opened again
     'close_delay_seconds': 5,           # done: wait this long, then terminate the bot
@@ -174,6 +175,7 @@ class Char:
         self.finish = None          # (result, note, close at)
         self.plugin_seen = False    # a MoDungeon line came in its log since it opened
         self.force_open = False     # Restart bot: opens even while the runner is stopped
+        self.login_restarts = 0     # restarted because it got stuck at the login
         self.connected_once = False # phBot reached the game server since it opened
         self.state = ''
         self.level = 0
@@ -909,29 +911,31 @@ class Runner:
             if live and live['connected']:
                 c.connected_once = True
             if not (live and live['in_game']):
-                if not c.in_game_at and now - c.launched_at > s['login_timeout_minutes'] * 60 and \
-                        not c.connected_once:
-                    # phBot never reached the game server: in client mode that means its game client never came up
-                    # (2 and 3 Nov: every new client crashed at start, a .pk2 file was held by other clients).
-                    # The character keeps its tries and no bot opens for a while (the .pk2 check also holds them).
-                    wait = float(s.get('start_fail_wait_minutes') or 15)
-                    crashes = self.client_crashes(c.launched_at)
-                    self.close(c, 'game client did not start - waiting %g min' % wait)
-                    c.queued = True
-                    if now >= self.start_pause:         # once per pause (the other open bots end the same way)
-                        self.log('%s: never connected in %g min - its game client did not start (%d client crash '
-                                 'file(s) since it opened) - no bot opens for %g min' % (
-                                     c.character, s['login_timeout_minutes'], crashes, wait))
-                    self.start_pause = max(self.start_pause, now + wait * 60)
-                    self.next_launch = max(self.next_launch, self.start_pause)
-                    continue
                 if not c.in_game_at and now - c.launched_at > s['login_timeout_minutes'] * 60:
-                    if c.restarts < s['max_restarts']:
-                        c.restarts += 1
-                        self.log('%s not in the game after %d min - opening again' % (c.character,
-                                                                                     s['login_timeout_minutes']))
-                        self.close(c, 'login timeout - opening again')
+                    crashes = 0 if c.connected_once else self.client_crashes(c.launched_at)
+                    if crashes:
+                        # its game client crashed at start (2 and 3 Nov: every new client did, a .pk2 file was held
+                        # by other clients): a new bot would crash too, so none opens for a while (the .pk2 check
+                        # holds them as well); the character keeps its tries
+                        wait = float(s.get('start_fail_wait_minutes') or 15)
+                        self.close(c, 'game client crashed - waiting %g min' % wait)
                         c.queued = True
+                        if now >= self.start_pause:     # once per pause (the other open bots end the same way)
+                            self.log('%s: its game client crashed at start (%d client crash file(s) since it opened)'
+                                     ' - no bot opens for %g min' % (c.character, crashes, wait))
+                        self.start_pause = max(self.start_pause, now + wait * 60)
+                        self.next_launch = max(self.next_launch, self.start_pause)
+                        continue
+                    # stuck at the login: no server in the list, the character missing from the character list,
+                    # a client that never connected... its bot is restarted (first in line, also when stopped)
+                    limit = int(s.get('login_restarts') or 10)
+                    if c.login_restarts < limit:
+                        c.login_restarts += 1
+                        self.log('%s: not in the game after %g min (%s) - restarting its bot (%d/%d)' % (
+                            c.character, s['login_timeout_minutes'],
+                            'stuck at the login' if c.connected_once else 'never connected', c.login_restarts, limit))
+                        self.close(c, 'stuck at the login - restarting')
+                        c.queued, c.force_open = True, True
                     else:
                         self.close(c, 'never got in the game')
                         self.set_result(c, 'failed', 'login')

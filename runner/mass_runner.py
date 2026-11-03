@@ -170,9 +170,10 @@ class SettingsWindow:
     """this PC's settings (settings.json): the runner's phBot folder, where the finished list comes from, timings"""
 
     NUMBERS = (('launch_delay_seconds', 'Seconds between two bots opening'),
-               ('login_timeout_minutes', 'Minutes to get in the game (else opened again)'),
-               ('max_restarts', 'Times a bot is opened again'),
-               ('start_fail_wait_minutes', 'Minutes without opening when a game client did not start'),
+               ('login_timeout_minutes', 'Minutes to get in the game (else its bot restarts)'),
+               ('max_restarts', 'Times a bot that closed / lost MoDungeon is opened again'),
+               ('login_restarts', 'Times a bot stuck at the login is restarted'),
+               ('start_fail_wait_minutes', 'Minutes without opening when a game client crashed'),
                ('min_level', 'Lowest level that plays (else "not ready")'),
                ('close_delay_seconds', 'Seconds before a done bot is closed'))
 
@@ -181,7 +182,7 @@ class SettingsWindow:
         s = app.runner.s
         top = self.top = tk.Toplevel(app.root)
         top.title('Settings')
-        top.geometry('720x460')
+        top.geometry('720x510')
         dark_title(top)
         top.transient(app.root)
         f = ttk.Frame(top, padding=12)

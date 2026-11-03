@@ -22,8 +22,16 @@ h = k32.CreateFileMappingW(wintypes.HANDLE(-1), None, 0x04, 0, 0x790, name)
 view = k32.MapViewOfFile(h, 0xF001F, 0, 0, 0x790)
 put = lambda off, data: ctypes.memmove(view + off, data, len(data))
 time.sleep(0.5)
-if char in os.environ.get('FAKE_NO_CONNECT', '').split(',') and not os.path.isfile('noconnect_%s.txt' % char):
-    open('noconnect_%s.txt' % char, 'w').close()    # the first time: never connects (ProjectHax refused it)
+crash = char in os.environ.get('FAKE_CRASH', '').split(',') and not os.path.isfile('crash_%s.txt' % char)
+if crash:                                   # the first time its client crashes at start: a crash file, no connection
+    import json
+    open('crash_%s.txt' % char, 'w').close()
+    client = next(iter(json.load(open('vSRO.json')).values()))['path']
+    os.makedirs(os.path.join(client, 'Dump'), exist_ok=True)
+    open(os.path.join(client, 'Dump', '0N[%s]_00_65 _.dmp' % time.strftime('%Y-%m-%d %H-%M-%S')), 'w').close()
+if crash or (char in os.environ.get('FAKE_NO_CONNECT', '').split(',') and
+             not os.path.isfile('noconnect_%s.txt' % char)):
+    open('noconnect_%s.txt' % char, 'w').close()    # the first time: never connects (stuck at the login)
     while not ctypes.string_at(view + 0x5e6, 1)[0]:
         time.sleep(0.1)
     sys.exit(0)

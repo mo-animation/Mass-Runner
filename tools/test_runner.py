@@ -47,7 +47,8 @@ def main():
         os.environ['FAKE_PLAYED'] = 'fnuk06'
         os.environ['FAKE_NO_QUIT'] = 'fnuk07'      # ignores the graceful close: terminated after QUIT_WAIT
         os.environ['FAKE_NO_PLUGIN'] = 'fnuk08'    # the first time in the game without MoDungeon: opened again
-        os.environ['FAKE_NO_CONNECT'] = 'fnuk09'   # the first time never connects: a pause, then it plays
+        os.environ['FAKE_NO_CONNECT'] = 'fnuk09'   # the first time stuck at the login: restarted, then it plays
+        os.environ['FAKE_CRASH'] = 'fnuk10'        # the first time its client crashes: a pause, then it plays
         rc.PLUGIN_WAIT = 4
         rc.LOCK_RECHECK = 1
         # a game folder whose Media.pk2 is held with write access for the first 5 s: no bot may open meanwhile
@@ -83,8 +84,11 @@ def main():
         quit = sorted(f[5:-4] for f in os.listdir(phbot) if f.startswith('quit_'))
         assert quit == ['fnuk%02d' % i for i in range(1, 11) if i != 7], quit     # closed by the graceful close
         assert any('fnuk08: MoDungeon did not load - opening again' in l for l in logs), 'fnuk08 not reopened'
-        assert any('fnuk09: never connected' in l and 'game client did not start' in l for l in logs), 'fnuk09 pause missing'
-        assert not [c for c in r.chars if c.character == 'fnuk09'][0].restarts, 'the pause used a try'
+        assert any(l.startswith('fnuk09: not in the game after') and 'restarting its bot (1/10)' in l
+                   for l in logs), 'fnuk09 not restarted'
+        assert not any(l.startswith('fnuk09') and 'crashed' in l for l in logs), 'fnuk09 taken for a crash'
+        assert any(l.startswith('fnuk10: its game client crashed at start') for l in logs), 'fnuk10 pause missing'
+        assert not [c for c in r.chars if c.character == 'fnuk10'][0].restarts, 'the pause used a try'
         assert not r.closing, 'bots still closing'
         alive = [c.character for c in r.chars if c.proc and rc.process_alive(c.proc.pid)]
         assert not alive, alive

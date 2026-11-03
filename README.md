@@ -22,7 +22,10 @@ closed (phBot terminated) and the next one opens in its place, until everyone ha
    Died / no route / did not get in / error / no result after the event's timeout = failed, closed.
 4. A character below `min_level` (100) is closed again as **not ready**. A character already logged in from
    another phBot folder (the farm bots) is never opened (it would be kicked there).
-5. **Game files locked**: before each bot opens, the client's .pk2 files are opened the way a starting client
+5. **Stuck at the login** (no server in the list, the character missing from the character list, never
+   connected): after `login_timeout_minutes` (4) its bot is restarted by itself, up to `login_restarts` (10) times,
+   then failed. Right-click **Restart bot** does it at once (also while stopped, no try used).
+6. **Game files locked**: before each bot opens, the client's .pk2 files are opened the way a starting client
    opens them. While one is held with write access, every new game client crashes at start (GFXFileManager.dll,
    `Dump\0N[...].dmp` in the client folder) and its phBot stays "Disconnected". Then no bot opens, the log names
    who has the file open, and the window shows GAME FILES LOCKED until it is free. On 2 and 3 Nov it was freed by
