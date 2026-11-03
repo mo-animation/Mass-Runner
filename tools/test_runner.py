@@ -10,6 +10,7 @@ import os
 import shutil
 import sys
 import tempfile
+import threading
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -41,13 +42,22 @@ def main():
             'builds_dir': os.path.join(ROOT, 'data', 'builds'), 'templates_dir': os.path.join(ROOT, 'templates'),
             'pick_template': os.path.join(ROOT, 'templates', 'pick_filter.db3'),
             'runs_dir': os.path.join(work, 'runs'), 'skip': os.path.join(work, 'skip.json'),
-            'close_delay_seconds': 0.5, 'login_timeout_minutes': 0.1, 'license_wait_minutes': 0.1})
+            'close_delay_seconds': 0.5, 'login_timeout_minutes': 0.1, 'start_fail_wait_minutes': 0.1})
         os.environ['FAKE_LOW'] = 'fnuk04'
         os.environ['FAKE_PLAYED'] = 'fnuk06'
         os.environ['FAKE_NO_QUIT'] = 'fnuk07'      # ignores the graceful close: terminated after QUIT_WAIT
         os.environ['FAKE_NO_PLUGIN'] = 'fnuk08'    # the first time in the game without MoDungeon: opened again
         os.environ['FAKE_NO_CONNECT'] = 'fnuk09'   # the first time never connects: a pause, then it plays
         rc.PLUGIN_WAIT = 4
+        rc.LOCK_RECHECK = 1
+        # a game folder whose Media.pk2 is held with write access for the first 5 s: no bot may open meanwhile
+        client = os.path.join(work, 'client')
+        os.makedirs(client)
+        with open(os.path.join(client, 'Media.pk2'), 'wb') as f:
+            f.write(b'pk2')
+        rc.write_json(os.path.join(phbot, 'vSRO.json'), {'test': {'servers': ['Elysian'], 'path': client}})
+        holder = open(os.path.join(client, 'Media.pk2'), 'r+b')
+        threading.Timer(5, holder.close).start()
         logs = []
         r = rc.Runner(settings, log=logs.append)
         assert [c.character for c in r.chars][0] == 'fnuk01' and len(r.chars) == 12, 'escort left out'
@@ -66,10 +76,14 @@ def main():
         res = r.results
         print('results:', {k: v['result'] for k, v in sorted(res.items())})
         assert most <= 3, 'more than 3 open: %d' % most
+        locked = next(i for i, l in enumerate(logs) if l.startswith('Game files locked: Media.pk2'))
+        free = next(i for i, l in enumerate(logs) if l.startswith('Game files free again'))
+        first_open = next(i for i, l in enumerate(logs) if l.startswith('open '))
+        assert locked < free < first_open, (locked, free, first_open)
         quit = sorted(f[5:-4] for f in os.listdir(phbot) if f.startswith('quit_'))
         assert quit == ['fnuk%02d' % i for i in range(1, 11) if i != 7], quit     # closed by the graceful close
         assert any('fnuk08: MoDungeon did not load - opening again' in l for l in logs), 'fnuk08 not reopened'
-        assert any('fnuk09: phBot never connected' in l for l in logs), 'fnuk09 pause missing'
+        assert any('fnuk09: never connected' in l and 'game client did not start' in l for l in logs), 'fnuk09 pause missing'
         assert not [c for c in r.chars if c.character == 'fnuk09'][0].restarts, 'the pause used a try'
         assert not r.closing, 'bots still closing'
         alive = [c.character for c in r.chars if c.proc and rc.process_alive(c.proc.pid)]

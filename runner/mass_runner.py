@@ -172,7 +172,7 @@ class SettingsWindow:
     NUMBERS = (('launch_delay_seconds', 'Seconds between two bots opening'),
                ('login_timeout_minutes', 'Minutes to get in the game (else opened again)'),
                ('max_restarts', 'Times a bot is opened again'),
-               ('license_wait_minutes', 'Minutes without opening when phBot cannot start'),
+               ('start_fail_wait_minutes', 'Minutes without opening when a game client did not start'),
                ('min_level', 'Lowest level that plays (else "not ready")'),
                ('close_delay_seconds', 'Seconds before a done bot is closed'))
 
@@ -441,6 +441,7 @@ class App:
             path = rc.finished_path(r.s)
             ev = r.event()
             running = r.running
+            blocked = r.blocked
         have = set(self.tree.get_children())
         for name, vals, tag in rows:
             if name in have:
@@ -451,8 +452,10 @@ class App:
             self.tree.delete(gone)
         self.dot.delete('all')
         self.dot.create_oval(2, 2, 11, 11, fill=DARK['done'] if running else DARK['dim'], outline='')
-        self.counts.config(text='%s   open %d/%s   left %d   done %d   failed %d' % (
-            ev['name'] if ev else 'no event', n_open, r.s['max_open'], todo, done, bad))
+        self.counts.config(text='%s   open %d/%s   left %d   done %d   failed %d%s' % (
+            ev['name'] if ev else 'no event', n_open, r.s['max_open'], todo, done, bad,
+            '   GAME FILES LOCKED (%s) - waiting' % ', '.join(blocked[0]) if blocked else ''),
+            foreground=DARK['bad'] if blocked else DARK['fg'])
         self.fin_label.config(text=('Finished list: %d characters' % len(fin)) if fin is not None else
                               'Finished list missing: %s' % path)
         phbot = r.s['phbot_dir']

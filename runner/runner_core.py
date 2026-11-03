@@ -54,7 +54,7 @@ DEFAULT_SETTINGS = {
     'max_open': 7,
     'launch_delay_seconds': 20,
     'login_timeout_minutes': 4,
-    'license_wait_minutes': 15,         # a phBot that never connects (ProjectHax): no new bot for this long
+    'start_fail_wait_minutes': 15,      # a bot whose game client never came up: no new bot for this long
     'max_restarts': 3,                  # a bot that closes by itself / never gets in the game is opened again
     'close_delay_seconds': 5,           # done: wait this long, then terminate the bot
     'event': 'Isis Dungeon',
@@ -68,6 +68,7 @@ DEFAULT_SETTINGS = {
 EVENT_TYPES = ('MoDungeon',)
 
 PLUGIN_WAIT = 45            # seconds in the game without a single MoDungeon log line = it did not load
+LOCK_RECHECK = 30           # seconds between two looks at locked game files
 NO_ENTRIES_WAIT = 90        # after "No more entries" MoDungeon uses a return scroll and empties the pet
 # MoDungeon log lines (plugin v4.14) -> result, note, seconds before the bot is closed (None = close_delay_seconds)
 MODUNGEON_LINES = [
@@ -387,6 +388,87 @@ def private_server_args(s):
     return []
 
 
+def client_dir(s):
+    """the game client's folder (vSRO.json 'path' of our server's entry), '' when not known"""
+    data = read_json(os.path.join(s['phbot_dir'], 'vSRO.json'), {}) or {}
+    for key, info in data.items():
+        if s['server'].lower() in [str(x).lower() for x in (info or {}).get('servers', [])]:
+            p = (info or {}).get('path') or ''
+            return p if os.path.isdir(p) else ''
+    return ''
+
+
+def blocked_pk2(folder):
+    """the .pk2 files a starting client cannot open. The client opens them read-only and lets others only read:
+    while any process holds one with write access, every NEW client fails to open it and crashes in
+    GFXFileManager.dll (+0x10a76, the archive pointer is null) - clients already running carry on.
+    2 and 3 Nov: the long-running clients of the user's phBot Manager; all new clients worked again once it closed."""
+    if sys.platform != 'win32' or not folder:
+        return []
+    from ctypes import wintypes
+    k32 = ctypes.windll.kernel32
+    k32.CreateFileW.restype = wintypes.HANDLE
+    k32.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.c_void_p, wintypes.DWORD,
+                                wintypes.DWORD, wintypes.HANDLE]
+    k32.CloseHandle.argtypes = [wintypes.HANDLE]
+    out = []
+    for f in sorted(os.listdir(folder)):
+        if f.lower().endswith('.pk2'):
+            h = k32.CreateFileW(os.path.join(folder, f), 0x80000000, 1, None, 3, 0x80, None)   # read, share read
+            if h is None or h == wintypes.HANDLE(-1).value:
+                if ctypes.GetLastError() == 32:                 # ERROR_SHARING_VIOLATION
+                    out.append(f)
+            else:
+                k32.CloseHandle(h)
+    return out
+
+
+def file_users(path):
+    """[(pid, exe name)] of the processes that have a file open (Windows Restart Manager)"""
+    if sys.platform != 'win32':
+        return []
+    from ctypes import wintypes
+
+    class UNIQUE(ctypes.Structure):
+        _fields_ = [('dwProcessId', wintypes.DWORD), ('ProcessStartTime', wintypes.FILETIME)]
+
+    class INFO(ctypes.Structure):
+        _fields_ = [('Process', UNIQUE), ('strAppName', ctypes.c_wchar * 256), ('strServiceShortName', ctypes.c_wchar * 64),
+                    ('ApplicationType', ctypes.c_int), ('AppStatus', wintypes.ULONG), ('TSSessionId', wintypes.DWORD),
+                    ('bRestartable', wintypes.BOOL)]
+    rm = ctypes.WinDLL('rstrtmgr')
+    sess = wintypes.DWORD()
+    if rm.RmStartSession(ctypes.byref(sess), 0, ctypes.create_unicode_buffer(64)):
+        return []
+    try:
+        if rm.RmRegisterResources(sess, 1, (ctypes.c_wchar_p * 1)(path), 0, None, 0, None):
+            return []
+        need, count, why = wintypes.UINT(0), wintypes.UINT(0), wintypes.DWORD()
+        rm.RmGetList(sess, ctypes.byref(need), ctypes.byref(count), None, ctypes.byref(why))
+        infos = (INFO * max(need.value, 1))()
+        count = wintypes.UINT(need.value)
+        if rm.RmGetList(sess, ctypes.byref(need), ctypes.byref(count), infos, ctypes.byref(why)):
+            return []
+        return [(infos[i].Process.dwProcessId, infos[i].strAppName) for i in range(count.value)]
+    finally:
+        rm.RmEndSession(sess)
+
+
+def describe_holders(s, path):
+    """'Death (phBot Sabo client), ...' for every process holding a file (which one has write access is not known)"""
+    names = {}
+    for ch, pid in running_phbots(s, any_folder=True).items():
+        st = phbot_status(pid) or {}
+        folder = os.path.basename(os.path.dirname(process_image(pid)))
+        names[pid] = '%s (%s)' % (st.get('name') or ch, folder)
+        if st.get('client_pid'):
+            names[st['client_pid']] = '%s (%s client)' % (st.get('name') or ch, folder)
+    out = []
+    for pid, exe in file_users(path):
+        out.append(names.get(pid, '%s pid %d' % (exe, pid)))
+    return out
+
+
 def build_command(s, c):
     cmd = list(s['phbot_command'])
     exe = cmd[0] if os.path.isabs(cmd[0]) else os.path.join(s['phbot_dir'], cmd[0])
@@ -532,7 +614,8 @@ class Runner:
         self.stop_event = threading.Event()
         self.thread = None
         self.next_launch = 0.0
-        self.license_pause = 0.0     # no bot opens before this (phBot could not start)
+        self.start_pause = 0.0       # no bot opens before this (a game client did not start)
+        self.blocked = None          # (locked .pk2 files, who has them open) while new clients cannot start
         self.chars = []
         self.closing = []           # threads of bots being closed (they still count as open)
         self.reload()
@@ -746,6 +829,32 @@ class Runner:
             tick += 1
             self.stop_event.wait(2.0)
 
+    def game_files_free(self):
+        """False while a .pk2 file of the client is held with write access (a new client would crash): the
+        holders are logged once per block and shown in the window"""
+        blocked = blocked_pk2(client_dir(self.s))
+        if not blocked:
+            if self.blocked:
+                self.log('Game files free again - opening bots.')
+            self.blocked = None
+            return True
+        if not self.blocked or self.blocked[0] != blocked:
+            holders = describe_holders(self.s, os.path.join(client_dir(self.s), blocked[0]))
+            self.blocked = (blocked, holders)
+            self.log('Game files locked: %s - a new game client would crash, no bot opens until they are free. '
+                     'Open: %s. Close the bots of other phBot folders / managers (their clients hold them).' % (
+                         ', '.join(blocked), ', '.join(holders) or '?'))
+        return False
+
+    def client_crashes(self, since):
+        """client crash files (Dump\\0N[...].dmp, a client that crashed at start) written since a time"""
+        folder = os.path.join(client_dir(self.s), 'Dump')
+        try:
+            return sum(1 for f in os.listdir(folder) if f.startswith('0N[') and
+                       os.path.getmtime(os.path.join(folder, f)) >= since)
+        except OSError:
+            return 0
+
     def set_result(self, c, result, note=''):
         self.results[c.character] = {'result': result, 'note': note, 'level': c.level, 'at': time.time()}
         self.save_results()
@@ -782,17 +891,19 @@ class Runner:
             if not (live and live['in_game']):
                 if not c.in_game_at and now - c.launched_at > s['login_timeout_minutes'] * 60 and \
                         not c.connected_once:
-                    # phBot never even reached the game server: it was not let through by ProjectHax (its license
-                    # servers; after ~25 starts in 1.5-2 h, 2 and 3 Nov). Every new start counts again, so no
-                    # new bot opens for a while and the character keeps its tries.
-                    wait = float(s.get('license_wait_minutes') or 15)
-                    self.close(c, 'phBot could not start - waiting %g min' % wait)
+                    # phBot never reached the game server: in client mode that means its game client never came up
+                    # (2 and 3 Nov: every new client crashed at start, a .pk2 file was held by other clients).
+                    # The character keeps its tries and no bot opens for a while (the .pk2 check also holds them).
+                    wait = float(s.get('start_fail_wait_minutes') or 15)
+                    crashes = self.client_crashes(c.launched_at)
+                    self.close(c, 'game client did not start - waiting %g min' % wait)
                     c.queued = True
-                    if now >= self.license_pause:       # once per pause (the other open bots end the same way)
-                        self.log('%s: phBot never connected in %g min (ProjectHax did not let it start) - '
-                                 'no bot opens for %g min' % (c.character, s['login_timeout_minutes'], wait))
-                    self.license_pause = max(self.license_pause, now + wait * 60)
-                    self.next_launch = max(self.next_launch, self.license_pause)
+                    if now >= self.start_pause:         # once per pause (the other open bots end the same way)
+                        self.log('%s: never connected in %g min - its game client did not start (%d client crash '
+                                 'file(s) since it opened) - no bot opens for %g min' % (
+                                     c.character, s['login_timeout_minutes'], crashes, wait))
+                    self.start_pause = max(self.start_pause, now + wait * 60)
+                    self.next_launch = max(self.next_launch, self.start_pause)
                     continue
                 if not c.in_game_at and now - c.launched_at > s['login_timeout_minutes'] * 60:
                     if c.restarts < s['max_restarts']:
@@ -850,7 +961,9 @@ class Runner:
         if self.running and now >= self.next_launch and self.open_count() < int(s['max_open']):
             nxt = next((c for c in self.chars if c.queued and not self.alive(c) and not self.ready(c)
                         and c.character not in self.results), None)
-            if nxt:
+            if nxt and not self.game_files_free():
+                self.next_launch = now + LOCK_RECHECK   # a client started now would crash: look again soon
+            elif nxt:
                 self.launch(nxt, ev)
                 self.next_launch = now + s['launch_delay_seconds']
         if self.running and not any(c.queued for c in self.chars) and not self.open_count():
