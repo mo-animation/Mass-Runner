@@ -39,14 +39,20 @@ A MassLeveler Escort on **this** PC counts too: its `data/progress.json` (done /
 the `MassLeveler Escort` folder next to Mass Runner and from every folder in settings `massleveler_dirs`.
 Untick **Only finished characters** to play everyone in accounts.csv.
 
-## Accounts (accounts.csv)
+## Accounts
 
-Mass Runner opens the characters in `accounts.csv` in its own folder (settings `accounts_csv`; a copy of
-MassLeveler's, it never changes MassLeveler's). Columns: `username,password,passcode,character`, optional `build`
-(default `ch_nuker`), `escort` (yes = left out) and `finished`. A character leveled some other way (not by
-MassLeveler) gets `finished` = **yes**: it plays without being in the finished list (Leveling shows
-"finished (accounts.csv)"). Add the row, save, press **Reload**. Close that character everywhere else first (a
-farm bot on another PC would kick it out, and with --relogdc kick it back).
+Mass Runner takes the characters from:
+- **MassLeveler Escort's `accounts.csv`**, read where it is (never changed): the `MassLeveler Escort` folder next to
+  Mass Runner's folder or one level higher (`D:\silkroad\new\mass runner\Mass Runner` finds
+  `D:\silkroad\new\MassLeveler Escort`), or the folder set in Settings. Its finished characters play.
+- `accounts.csv` in Mass Runner's folder, if there is one (old setups).
+- **Accounts** button: the Excel sheet `extra_accounts.xlsx` in Mass Runner's folder (made the first time, opened
+  in Excel). One row per account: `username, password, passcode, character` (`build` optional, default
+  `ch_nuker`). Save it and the list updates by itself. These characters play **without** the finished list
+  (Leveling shows "added by hand"); a character in both lists counts as added by hand.
+
+The escort row (`escort` = yes) never plays. Close a character everywhere else before it plays (a farm bot on
+another PC kicks it out, and with --relogdc kicks it back).
 
 ## Events
 

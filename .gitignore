@@ -1,5 +1,6 @@
 # never uploaded: account passwords and what each PC keeps for itself
 accounts.csv
+extra_accounts.xlsx
 data/skip.json
 data/runs/
 data/mass_runner.log

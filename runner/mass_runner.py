@@ -304,6 +304,8 @@ class App:
         self.phbot_label.pack(side='left')
         ttk.Button(bar3, text='Settings', command=lambda: SettingsWindow(self)).pack(side='right')
         ttk.Button(bar3, text='Reload', command=self.reload).pack(side='right', padx=4)
+        ttk.Button(bar3, text='Accounts', command=self.open_accounts).pack(side='right')
+        self.extra_mtime = self.extra_stamp()
 
         pane = ttk.Panedwindow(root, orient='vertical')
         pane.pack(fill='both', expand=True, padx=8, pady=(0, 8))
@@ -384,6 +386,26 @@ class App:
         self.max_var.set(str(self.runner.s['max_open']))
         self.only_var.set(bool(self.runner.s['only_finished']))
 
+    def extra_stamp(self):
+        try:
+            return os.path.getmtime(rc.extra_path(self.runner.s))
+        except OSError:
+            return 0
+
+    def open_accounts(self):
+        """the Excel sheet of accounts added by hand: made the first time, opened in Excel; read again when saved"""
+        path = rc.extra_path(self.runner.s)
+        try:
+            if not os.path.isfile(path):
+                rc.make_extra_sheet(path)
+                self.extra_mtime = self.extra_stamp()
+            os.startfile(path)
+        except OSError as e:
+            messagebox.showerror('Mass Runner', 'Could not open %s:\n%s' % (path, e))
+            return
+        self.runner.log('Accounts sheet opened: %s - add rows (username, password, passcode, character), save, '
+                        'and they show up here (they play without the finished list)' % path)
+
     def close_all(self):
         if messagebox.askyesno('Mass Runner', 'Stop and terminate every open bot?'):
             self.runner.stop(True)
@@ -411,6 +433,11 @@ class App:
             self.menu.tk_popup(e.x_root, e.y_root)
 
     def update(self):
+        stamp = self.extra_stamp()
+        if stamp != self.extra_mtime:       # the accounts sheet was saved: read the accounts again
+            self.extra_mtime = stamp
+            self.runner.log('Accounts sheet saved - reading the accounts again')
+            self.reload()
         while True:
             try:
                 msg = self.logq.get_nowait()
@@ -426,7 +453,7 @@ class App:
                 why = r.ready(c)
                 lvl = (r.finished or {}).get(c.character)
                 ready = 'unticked' if c.skip else ('lv %d' % lvl if lvl else 'finished') \
-                    if r.finished and c.character in r.finished else 'finished (accounts.csv)' \
+                    if r.finished and c.character in r.finished else 'added by hand' \
                     if c.always else why or ''
                 result = res.get('result', '') + (' - ' + res['note'] if res.get('note') else '')
                 at = time.strftime('%d/%m %H:%M', time.localtime(res['at'])) if res.get('at') else ''

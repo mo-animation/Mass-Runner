@@ -1,6 +1,6 @@
 """Mass Runner core: plays an event (a dungeon, ...) with the characters MassLeveler Escort finished.
 
-The characters come from accounts.csv (the same file as MassLeveler Escort). Only the ones in the finished list
+The characters come from MassLeveler Escort's accounts.csv + the Excel sheet of accounts added by hand. Only the ones in the finished list
 MassLeveler Escort writes to OneDrive (MassLeveler/finished.json) are opened, at most max_open at a time: a
 character that is done is closed (phBot terminated) and the next one opens in its place.
 
@@ -37,7 +37,8 @@ DEFAULT_SETTINGS = {
     'mode': 'client',                   # client / clientless (the server kicked clientless characters)
     'hide_client': True,
     'minimize_bots': True,
-    'accounts_csv': 'accounts.csv',
+    'accounts_csv': 'accounts.csv',     # + MassLeveler Escort's accounts.csv (found by itself)
+    'extra_accounts': 'extra_accounts.xlsx',    # Excel sheet of accounts added by hand (Accounts button)
     'passcode_digits': 8,
     'default_build': 'ch_nuker',        # accounts.csv column "build" overrides it
     'builds_dir': 'data/builds',
@@ -132,10 +133,13 @@ def finished_path(s):
 
 def local_massleveler_dirs(s):
     dirs = [path_in_root(d) for d in s.get('massleveler_dirs') or [] if d]
-    dirs.append(os.path.join(os.path.dirname(ROOT), 'MassLeveler Escort'))
+    if s.get('find_massleveler', True):
+        dirs.append(os.path.join(os.path.dirname(ROOT), 'MassLeveler Escort'))
+        dirs.append(os.path.join(os.path.dirname(os.path.dirname(ROOT)), 'MassLeveler Escort'))  # mass runner\Mass Runner
     out = []
     for d in dirs:
-        if os.path.isfile(os.path.join(d, 'data', 'progress.json')) and                 os.path.normcase(os.path.abspath(d)) not in [os.path.normcase(os.path.abspath(x)) for x in out]:
+        if (os.path.isfile(os.path.join(d, 'data', 'progress.json')) or os.path.isfile(os.path.join(d, 'accounts.csv'))) \
+                and os.path.normcase(os.path.abspath(d)) not in [os.path.normcase(os.path.abspath(x)) for x in out]:
             out.append(d)
     return out
 
@@ -194,18 +198,83 @@ def read_csv_rows(path):
         return rows
 
 
+EXTRA_HEADER = ['username', 'password', 'passcode', 'character', 'build']
+
+
+def _cell(v):
+    if isinstance(v, float) and v.is_integer():
+        v = int(v)                  # Excel keeps a number passcode as 1234567.0
+    return '' if v is None else str(v).strip()
+
+
+def read_xlsx_rows(path):
+    if not os.path.isfile(path):
+        return []
+    import openpyxl
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    try:
+        it = wb.worksheets[0].iter_rows(values_only=True)
+        head = [_cell(h).lower() for h in next(it, ())]
+        rows = []
+        for vals in it:
+            r = {k: _cell(v) for k, v in zip(head, vals) if k}
+            if r.get('username') and not r['username'].startswith('#'):
+                rows.append(r)
+        return rows
+    finally:
+        wb.close()
+
+
+def extra_path(s):
+    return path_in_root(s.get('extra_accounts') or 'extra_accounts.xlsx')
+
+
+def make_extra_sheet(path):
+    """the Excel sheet for accounts added by hand (empty, only the header)"""
+    import openpyxl
+    from openpyxl.styles import Font
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'accounts'
+    ws.append(EXTRA_HEADER)
+    for i, w in enumerate((18, 18, 12, 18, 14)):
+        ws.cell(1, i + 1).font = Font(bold=True)
+        ws.column_dimensions['ABCDE'[i]].width = w
+    for col in 'ABCD':              # text, so Excel keeps the passcode's leading zeros
+        for row in range(2, 500):
+            ws['%s%d' % (col, row)].number_format = '@'
+    wb.save(path)
+
+
+def account_rows(s):
+    """(row, added by hand): MassLeveler Escort's accounts.csv (found by itself), this folder's accounts.csv if any,
+    then the Excel sheet of accounts added by hand (extra_accounts.xlsx); a character is taken once, the sheet wins"""
+    rows = {}
+    files = [path_in_root(s['accounts_csv'])] + [os.path.join(d, 'accounts.csv') for d in local_massleveler_dirs(s)]
+    for f in files:
+        for r in read_csv_rows(f):
+            if r.get('character'):
+                rows.setdefault(r['character'].lower(), (r, False))
+    path = extra_path(s)
+    for r in read_csv_rows(path) if path.lower().endswith('.csv') else read_xlsx_rows(path):
+        if r.get('character'):
+            rows[r['character'].lower()] = (r, True)
+    return list(rows.values())
+
+
 def load_chars(s, skip):
     out = []
     yes = ('yes', 'y', '1', 'true', 'x')
-    for r in read_csv_rows(path_in_root(s['accounts_csv'])):
-        if r.get('escort', '').lower() in yes or not r.get('character'):
+    for r, added in account_rows(s):
+        if r.get('escort', '').lower() in yes:
             continue        # the escort levels the groups, it does not play events
         passcode = r.get('passcode', '')
         if passcode.isdigit() and s['passcode_digits']:
             passcode = passcode.zfill(s['passcode_digits'])     # Excel drops leading zeros
         c = Char(r['username'], r.get('password', ''), passcode, r['character'], r.get('build') or s['default_build'])
         c.skip = c.character in skip
-        c.always = r.get('finished', '').lower() in yes     # leveled elsewhere (not by MassLeveler)
+        # added by hand / "finished" column: leveled elsewhere, plays without being in the finished list
+        c.always = added or r.get('finished', '').lower() in yes
         out.append(c)
     return out
 

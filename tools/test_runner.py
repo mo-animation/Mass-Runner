@@ -1,8 +1,8 @@
 """Mass Runner test with a fake phBot (tools/fake_phbot.py): no game, no real accounts.
 
 py -I tools/test_runner.py
-12 characters, 10 in the finished list + 1 marked finished in accounts.csv, one level 95: at most 3 open at a time, the level-95 one is
-closed as not ready, fnuk06 gets the entry NPC's 271c (played today) and is closed as no entries, the others
+12 characters (accounts.csv + MassLeveler's + the Excel sheet of added ones), 10 in the finished list + 1 added by
+hand, one level 95: at most 3 open at a time, the level-95 one is closed as not ready, fnuk06 gets the entry NPC's 271c (played today) and is closed as no entries, the others
 write MoDungeon's "All 1 run(s) done" line and are closed as done.
 """
 import json
@@ -27,10 +27,20 @@ def main():
         rc.write_json(os.path.join(phbot, 'Config', 'MoDungeon.json'), {'go': [1], 'dungeon': [1], 'exit': [1],
                                                                         'runs_todo': 3})
         with open(os.path.join(work, 'accounts.csv'), 'w') as f:
-            f.write('username,password,passcode,character,escort,finished\n')
-            f.write('esc,p,1,wiz01,yes,\n')
-            for i in range(1, 13):      # fnuk12: not in the finished list but "finished" in accounts.csv
-                f.write('u%02d,p,1234567,fnuk%02d,,%s\n' % (i, i, 'yes' if i == 12 else ''))
+            f.write('username,password,passcode,character,escort\n')
+            f.write('esc,p,1,wiz01,yes\n')
+            for i in range(1, 11):
+                f.write('u%02d,p,1234567,fnuk%02d,\n' % (i, i))
+        ml = os.path.join(work, 'MassLeveler Escort')     # its accounts.csv is read too (fnuk01 only once)
+        os.makedirs(ml)
+        with open(os.path.join(ml, 'accounts.csv'), 'w') as f:
+            f.write('username,password,passcode,character\nu01,p,1234567,fnuk01\nu11,p,1234567,fnuk11\n')
+        # the Excel sheet of accounts added by hand: fnuk12 plays without being in the finished list
+        rc.make_extra_sheet(os.path.join(work, 'extra.xlsx'))
+        import openpyxl
+        wb = openpyxl.load_workbook(os.path.join(work, 'extra.xlsx'))
+        wb.active.append(['u12', 'p', 1234567, 'fnuk12'])
+        wb.save(os.path.join(work, 'extra.xlsx'))
         rc.write_json(os.path.join(work, 'finished.json'), {'characters': {
             'fnuk%02d' % i: {'level': 100} for i in range(1, 11)}})
         settings = os.path.join(work, 'settings.json')
@@ -38,6 +48,7 @@ def main():
             'phbot_dir': phbot, 'phbot_dirs': [], 'phbot_command': [sys.executable, os.path.join(ROOT, 'tools',
                                                                                               'fake_phbot.py')],
             'login_args': ['--x'], 'accounts_csv': os.path.join(work, 'accounts.csv'),
+            'massleveler_dirs': [ml], 'find_massleveler': False, 'extra_accounts': os.path.join(work, 'extra.xlsx'),
             'finished_file': os.path.join(work, 'finished.json'), 'max_open': 3, 'launch_delay_seconds': 0.5,
             'builds_dir': os.path.join(ROOT, 'data', 'builds'), 'templates_dir': os.path.join(ROOT, 'templates'),
             'pick_template': os.path.join(ROOT, 'templates', 'pick_filter.db3'),
@@ -61,7 +72,8 @@ def main():
         threading.Timer(5, holder.close).start()
         logs = []
         r = rc.Runner(settings, log=logs.append)
-        assert [c.character for c in r.chars][0] == 'fnuk01' and len(r.chars) == 12, 'escort left out'
+        assert [c.character for c in r.chars] == ['fnuk%02d' % i for i in range(1, 13)], 'escort left out, once each'
+        assert r.chars[11].passcode == r.chars[0].passcode == '01234567' and r.chars[11].always and not r.chars[10].always
         r.start()
         most = 0
         t0 = time.time()
@@ -124,7 +136,7 @@ def restart_test():
         rc.write_json(settings, {
             'phbot_dir': phbot, 'phbot_dirs': [], 'phbot_command': [sys.executable, os.path.join(ROOT, 'tools',
                                                                                               'fake_phbot.py')],
-            'login_args': ['--x'], 'accounts_csv': os.path.join(work, 'accounts.csv'), 'only_finished': False,
+            'login_args': ['--x'], 'accounts_csv': os.path.join(work, 'accounts.csv'), 'only_finished': False, 'find_massleveler': False,
             'finished_file': os.path.join(work, 'none.json'), 'launch_delay_seconds': 0.5,
             'builds_dir': os.path.join(ROOT, 'data', 'builds'), 'templates_dir': os.path.join(ROOT, 'templates'),
             'runs_dir': os.path.join(work, 'runs'), 'skip': os.path.join(work, 'skip.json'),
