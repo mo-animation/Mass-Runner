@@ -54,6 +54,7 @@ DEFAULT_SETTINGS = {
     'max_open': 7,
     'launch_delay_seconds': 20,
     'login_timeout_minutes': 4,
+    'license_wait_minutes': 15,         # a phBot that never connects (ProjectHax): no new bot for this long
     'max_restarts': 3,                  # a bot that closes by itself / never gets in the game is opened again
     'close_delay_seconds': 5,           # done: wait this long, then terminate the bot
     'event': 'Isis Dungeon',
@@ -171,6 +172,7 @@ class Char:
         self.log_pos = 0            # phBot log size when it opened: only newer lines count
         self.finish = None          # (result, note, close at)
         self.plugin_seen = False    # a MoDungeon line came in its log since it opened
+        self.connected_once = False # phBot reached the game server since it opened
         self.state = ''
         self.level = 0
 
@@ -530,6 +532,7 @@ class Runner:
         self.stop_event = threading.Event()
         self.thread = None
         self.next_launch = 0.0
+        self.license_pause = 0.0     # no bot opens before this (phBot could not start)
         self.chars = []
         self.closing = []           # threads of bots being closed (they still count as open)
         self.reload()
@@ -774,7 +777,23 @@ class Runner:
                     self.close(c, '%s%s' % (c.finish[0], ' - ' + c.finish[1] if c.finish[1] else ''))
                     self.log('%s %s - closed' % (c.character, c.state))
                 continue
+            if live and live['connected']:
+                c.connected_once = True
             if not (live and live['in_game']):
+                if not c.in_game_at and now - c.launched_at > s['login_timeout_minutes'] * 60 and \
+                        not c.connected_once:
+                    # phBot never even reached the game server: it was not let through by ProjectHax (its license
+                    # servers; after ~25 starts in 1.5-2 h, 2 and 3 Nov). Every new start counts again, so no
+                    # new bot opens for a while and the character keeps its tries.
+                    wait = float(s.get('license_wait_minutes') or 15)
+                    self.close(c, 'phBot could not start - waiting %g min' % wait)
+                    c.queued = True
+                    if now >= self.license_pause:       # once per pause (the other open bots end the same way)
+                        self.log('%s: phBot never connected in %g min (ProjectHax did not let it start) - '
+                                 'no bot opens for %g min' % (c.character, s['login_timeout_minutes'], wait))
+                    self.license_pause = max(self.license_pause, now + wait * 60)
+                    self.next_launch = max(self.next_launch, self.license_pause)
+                    continue
                 if not c.in_game_at and now - c.launched_at > s['login_timeout_minutes'] * 60:
                     if c.restarts < s['max_restarts']:
                         c.restarts += 1
@@ -842,7 +861,7 @@ class Runner:
     def launch(self, c, ev):
         s = self.s
         c.queued = False
-        c.finish, c.in_game_at, c.level, c.plugin_seen = None, 0.0, 0, False
+        c.finish, c.in_game_at, c.level, c.plugin_seen, c.connected_once = None, 0.0, 0, False, False
         pid = running_phbots(s).get(c.character.lower())
         if pid:
             c.proc, c.launched_at, c.plugin_seen = RunningBot(pid), time.time(), True

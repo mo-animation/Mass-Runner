@@ -172,6 +172,7 @@ class SettingsWindow:
     NUMBERS = (('launch_delay_seconds', 'Seconds between two bots opening'),
                ('login_timeout_minutes', 'Minutes to get in the game (else opened again)'),
                ('max_restarts', 'Times a bot is opened again'),
+               ('license_wait_minutes', 'Minutes without opening when phBot cannot start'),
                ('min_level', 'Lowest level that plays (else "not ready")'),
                ('close_delay_seconds', 'Seconds before a done bot is closed'))
 

@@ -41,11 +41,12 @@ def main():
             'builds_dir': os.path.join(ROOT, 'data', 'builds'), 'templates_dir': os.path.join(ROOT, 'templates'),
             'pick_template': os.path.join(ROOT, 'templates', 'pick_filter.db3'),
             'runs_dir': os.path.join(work, 'runs'), 'skip': os.path.join(work, 'skip.json'),
-            'close_delay_seconds': 0.5})
+            'close_delay_seconds': 0.5, 'login_timeout_minutes': 0.1, 'license_wait_minutes': 0.1})
         os.environ['FAKE_LOW'] = 'fnuk04'
         os.environ['FAKE_PLAYED'] = 'fnuk06'
         os.environ['FAKE_NO_QUIT'] = 'fnuk07'      # ignores the graceful close: terminated after QUIT_WAIT
         os.environ['FAKE_NO_PLUGIN'] = 'fnuk08'    # the first time in the game without MoDungeon: opened again
+        os.environ['FAKE_NO_CONNECT'] = 'fnuk09'   # the first time never connects: a pause, then it plays
         rc.PLUGIN_WAIT = 4
         logs = []
         r = rc.Runner(settings, log=logs.append)
@@ -68,6 +69,8 @@ def main():
         quit = sorted(f[5:-4] for f in os.listdir(phbot) if f.startswith('quit_'))
         assert quit == ['fnuk%02d' % i for i in range(1, 11) if i != 7], quit     # closed by the graceful close
         assert any('fnuk08: MoDungeon did not load - opening again' in l for l in logs), 'fnuk08 not reopened'
+        assert any('fnuk09: phBot never connected' in l for l in logs), 'fnuk09 pause missing'
+        assert not [c for c in r.chars if c.character == 'fnuk09'][0].restarts, 'the pause used a try'
         assert not r.closing, 'bots still closing'
         alive = [c.character for c in r.chars if c.proc and rc.process_alive(c.proc.pid)]
         assert not alive, alive
