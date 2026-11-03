@@ -166,6 +166,7 @@ class Char:
         self.character = character
         self.build = build
         self.skip = False
+        self.always = False         # accounts.csv column "finished" = yes: plays without the finished list
         self.proc = None
         self.queued = False         # waits for a free place to open
         self.launched_at = 0.0
@@ -195,14 +196,16 @@ def read_csv_rows(path):
 
 def load_chars(s, skip):
     out = []
+    yes = ('yes', 'y', '1', 'true', 'x')
     for r in read_csv_rows(path_in_root(s['accounts_csv'])):
-        if r.get('escort', '').lower() in ('yes', 'y', '1', 'true', 'x') or not r.get('character'):
+        if r.get('escort', '').lower() in yes or not r.get('character'):
             continue        # the escort levels the groups, it does not play events
         passcode = r.get('passcode', '')
         if passcode.isdigit() and s['passcode_digits']:
             passcode = passcode.zfill(s['passcode_digits'])     # Excel drops leading zeros
         c = Char(r['username'], r.get('password', ''), passcode, r['character'], r.get('build') or s['default_build'])
         c.skip = c.character in skip
+        c.always = r.get('finished', '').lower() in yes     # leveled elsewhere (not by MassLeveler)
         out.append(c)
     return out
 
@@ -716,7 +719,7 @@ class Runner:
         """'' = can play, else why not"""
         if c.skip:
             return 'unticked'
-        if self.s['only_finished']:
+        if self.s['only_finished'] and not c.always:
             if self.finished is None:
                 return 'no finished list'
             if c.character not in self.finished:

@@ -39,6 +39,15 @@ A MassLeveler Escort on **this** PC counts too: its `data/progress.json` (done /
 the `MassLeveler Escort` folder next to Mass Runner and from every folder in settings `massleveler_dirs`.
 Untick **Only finished characters** to play everyone in accounts.csv.
 
+## Accounts (accounts.csv)
+
+Mass Runner opens the characters in `accounts.csv` in its own folder (settings `accounts_csv`; a copy of
+MassLeveler's, it never changes MassLeveler's). Columns: `username,password,passcode,character`, optional `build`
+(default `ch_nuker`), `escort` (yes = left out) and `finished`. A character leveled some other way (not by
+MassLeveler) gets `finished` = **yes**: it plays without being in the finished list (Leveling shows
+"finished (accounts.csv)"). Add the row, save, press **Reload**. Close that character everywhere else first (a
+farm bot on another PC would kick it out, and with --relogdc kick it back).
+
 ## Events
 
 **Events...**: name, plugin (MoDungeon), MoDungeon profile, runs per character, give up after (min). A new dungeon =

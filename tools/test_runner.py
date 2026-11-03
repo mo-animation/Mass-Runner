@@ -1,7 +1,7 @@
 """Mass Runner test with a fake phBot (tools/fake_phbot.py): no game, no real accounts.
 
 py -I tools/test_runner.py
-12 characters, 10 in the finished list, one of them level 95: at most 3 open at a time, the level-95 one is
+12 characters, 10 in the finished list + 1 marked finished in accounts.csv, one level 95: at most 3 open at a time, the level-95 one is
 closed as not ready, fnuk06 gets the entry NPC's 271c (played today) and is closed as no entries, the others
 write MoDungeon's "All 1 run(s) done" line and are closed as done.
 """
@@ -27,10 +27,10 @@ def main():
         rc.write_json(os.path.join(phbot, 'Config', 'MoDungeon.json'), {'go': [1], 'dungeon': [1], 'exit': [1],
                                                                         'runs_todo': 3})
         with open(os.path.join(work, 'accounts.csv'), 'w') as f:
-            f.write('username,password,passcode,character,escort\n')
-            f.write('esc,p,1,wiz01,yes\n')
-            for i in range(1, 13):
-                f.write('u%02d,p,1234567,fnuk%02d,\n' % (i, i))
+            f.write('username,password,passcode,character,escort,finished\n')
+            f.write('esc,p,1,wiz01,yes,\n')
+            for i in range(1, 13):      # fnuk12: not in the finished list but "finished" in accounts.csv
+                f.write('u%02d,p,1234567,fnuk%02d,,%s\n' % (i, i, 'yes' if i == 12 else ''))
         rc.write_json(os.path.join(work, 'finished.json'), {'characters': {
             'fnuk%02d' % i: {'level': 100} for i in range(1, 11)}})
         settings = os.path.join(work, 'settings.json')
@@ -82,7 +82,7 @@ def main():
         first_open = next(i for i, l in enumerate(logs) if l.startswith('open '))
         assert locked < free < first_open, (locked, free, first_open)
         quit = sorted(f[5:-4] for f in os.listdir(phbot) if f.startswith('quit_'))
-        assert quit == ['fnuk%02d' % i for i in range(1, 11) if i != 7], quit     # closed by the graceful close
+        assert quit == ['fnuk%02d' % i for i in range(1, 13) if i not in (7, 11)], quit   # the graceful close
         assert any('fnuk08: MoDungeon did not load - opening again' in l for l in logs), 'fnuk08 not reopened'
         assert any(l.startswith('fnuk09: not in the game after') and 'restarting its bot (1/10)' in l
                    for l in logs), 'fnuk09 not restarted'
@@ -94,8 +94,8 @@ def main():
         assert not alive, alive
         assert res['fnuk04']['result'] == 'not ready', res['fnuk04']
         assert res['fnuk06']['result'] == 'no entries', res['fnuk06']
-        assert all(res['fnuk%02d' % i]['result'] == 'done' for i in range(1, 11) if i not in (4, 6))
-        assert 'fnuk11' not in res and 'fnuk12' not in res, 'not finished characters were opened'
+        assert all(res['fnuk%02d' % i]['result'] == 'done' for i in range(1, 13) if i not in (4, 6, 11))
+        assert 'fnuk11' not in res, 'a not finished character was opened'
         prof = rc.read_json(os.path.join(phbot, 'Config', 'Elysian_fnuk01.json'))
         am = prof['Auto Mastery']
         assert 'Job Skills' in am['Mastery'] and 'Job - Trader Pouch' in am['Skill'] and 'Force' in am['Mastery']

@@ -426,7 +426,8 @@ class App:
                 why = r.ready(c)
                 lvl = (r.finished or {}).get(c.character)
                 ready = 'unticked' if c.skip else ('lv %d' % lvl if lvl else 'finished') \
-                    if r.finished and c.character in r.finished else why or ''
+                    if r.finished and c.character in r.finished else 'finished (accounts.csv)' \
+                    if c.always else why or ''
                 result = res.get('result', '') + (' - ' + res['note'] if res.get('note') else '')
                 at = time.strftime('%d/%m %H:%M', time.localtime(res['at'])) if res.get('at') else ''
                 alive = r.alive(c)
