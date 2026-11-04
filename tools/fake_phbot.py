@@ -46,10 +46,16 @@ if no_plugin:                               # the first time: in the game withou
 with open(os.path.join('Log', 'Elysian_%s_Log.txt' % char), 'a') as f:
     if no_plugin:
         f.write('[10:00:00] Character successfully joined the game\n')
+    elif char in os.environ.get('FAKE_WAIT', '').split(',') and not os.path.isfile('wait_%s.txt' % char):
+        open('wait_%s.txt' % char, 'w').close()     # the first time: stays at the entry NPC (no result of its own)
+        f.write('[10:00:00] [MoDungeon] Going to the dungeon...\n')
     elif char in os.environ.get('FAKE_PLAYED', '').split(','):     # already played today: the entry NPC refuses
         f.write('[10:00:00] [MoDungeon] debug: NPC refused, code 271c\n[10:00:00] [MoDungeon] No teleport after '
                 'talking to the NPC (dungeon full?) - trying again every 3s until it works (try 2).\n')
     else:
+        f.write('[10:00:00] [MoDungeon] In the dungeon - fighting.\n')
+        f.flush()
+        time.sleep(float(os.environ.get('FAKE_DUNGEON_SECONDS') or 0))     # the dungeon itself
         f.write('[10:00:00] [MoDungeon] Run 1 finished (1/1).\n[10:00:00] [MoDungeon] All 1 run(s) done - stopping.\n')
 quits = os.environ.get('FAKE_NO_QUIT', '').split(',')
 for _ in range(6000):                       # phBot's graceful close flag (Mass Runner's close); FAKE_NO_QUIT ignore it

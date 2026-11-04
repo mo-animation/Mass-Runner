@@ -61,14 +61,14 @@ def dark_title(win):
 
 
 class EventsWindow:
-    """the events of the menu: name, type, MoDungeon profile, runs per character, timeout"""
+    """the events of the menu: name, type, MoDungeon profile, runs per character, timeout, party size"""
 
     def __init__(self, app):
         self.app = app
         self.events = [dict(e) for e in app.runner.s.get('events') or []]
         top = self.top = tk.Toplevel(app.root)
         top.title('Events')
-        top.geometry('640x340')
+        top.geometry('640x380')
         dark_title(top)
         top.transient(app.root)
         left = ttk.Frame(top, padding=8)
@@ -83,11 +83,12 @@ class EventsWindow:
         ttk.Button(row, text='Delete', command=self.delete).pack(side='left', padx=4)
         form = ttk.Frame(top, padding=8)
         form.pack(side='left', fill='both', expand=True)
-        self.vars = {k: tk.StringVar() for k in ('name', 'type', 'profile', 'runs', 'timeout_minutes')}
+        self.vars = {k: tk.StringVar() for k in ('name', 'type', 'profile', 'runs', 'timeout_minutes', 'party_size')}
         profiles = rc.modungeon_profiles(app.runner.s)
         fields = (('name', 'Name', None), ('type', 'Plugin', list(rc.EVENT_TYPES)),
                   ('profile', 'MoDungeon profile', profiles), ('runs', 'Runs per character', None),
-                  ('timeout_minutes', 'Give up after (min)', None))
+                  ('timeout_minutes', 'Give up after (min)', None),
+                  ('party_size', 'Party size', ['1', '2']))
         for i, (k, label, values) in enumerate(fields):
             ttk.Label(form, text=label).grid(row=i, column=0, sticky='w', pady=4)
             w = ttk.Combobox(form, textvariable=self.vars[k], values=values, width=30) if values else \
@@ -95,7 +96,9 @@ class EventsWindow:
             w.grid(row=i, column=1, sticky='w', pady=4, padx=6)
         ttk.Label(form, foreground=DARK['dim'], wraplength=360, justify='left',
                   text='MoDungeon profiles are the routes saved in the MoDungeon plugin of the runner\'s phBot '
-                       '(Profiles button). Every character loads the event\'s profile and starts by itself.'
+                       '(Profiles button). Every character loads the event\'s profile and starts by itself.\n'
+                       'Party size 2: the characters open two by two in a party (tick "Party of 2" in that '
+                       'MoDungeon profile too). 1: everyone alone.'
                   ).grid(row=len(fields), column=0, columnspan=2, sticky='w', pady=(10, 0))
         bar = ttk.Frame(form)
         bar.grid(row=len(fields) + 1, column=0, columnspan=2, sticky='e', pady=(16, 0))
@@ -119,9 +122,10 @@ class EventsWindow:
         e['name'] = self.vars['name'].get().strip() or 'Event'
         e['type'] = self.vars['type'].get().strip() or 'MoDungeon'
         e['profile'] = self.vars['profile'].get().strip() or 'Default'
-        for k, d in (('runs', 1), ('timeout_minutes', 45)):
+        for k, d in (('runs', 1), ('timeout_minutes', 45), ('party_size', 1)):
             v = self.vars[k].get().strip()
             e[k] = int(v) if v.isdigit() else d
+        e['party_size'] = 2 if e['party_size'] >= 2 else 1
         self.lst.delete(self.cur)
         self.lst.insert(self.cur, e['name'])
 
@@ -134,12 +138,12 @@ class EventsWindow:
         self.lst.selection_set(self.cur)
         e = self.events[self.cur]
         for k in self.vars:
-            self.vars[k].set(str(e.get(k, '')))
+            self.vars[k].set(str(e.get(k, 1 if k == 'party_size' else '')))
 
     def add(self):
         self.keep()
         self.events.append({'name': 'New event', 'type': 'MoDungeon', 'profile': 'Default', 'runs': 1,
-                            'timeout_minutes': 45})
+                            'timeout_minutes': 45, 'party_size': 1})
         self.fill()
         self.cur = None
         self.lst.selection_set(len(self.events) - 1)

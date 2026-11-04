@@ -9,6 +9,9 @@ Config/MoDungeon_<char>.json gets the event's MoDungeon profile + Auto start, Mo
 game and the runner reads phBot's log (Log/<server>_<char>_Log.txt) to know when it is done: the last
 "All N run(s) done" line comes after the pet's items went to the inventory.
 
+An event with party_size 2 (the Maze: its entry NPC needs a party) opens the characters two by two: the first of a pair
+invites the second in phBot, the second accepts only from it; MoDungeon's "Party of 2" keeps them together inside.
+
 Every character gets a phBot profile from its build (templates/<build>.json + the last skill bracket of
 data/builds/<build>.json): Auto Mastery masteries + skills of the build, then the job mastery + job skills.
 """
@@ -61,7 +64,8 @@ DEFAULT_SETTINGS = {
     'close_delay_seconds': 5,           # done: wait this long, then terminate the bot
     'event': 'Isis Dungeon',
     'events': [
-        {'name': 'Isis Dungeon', 'type': 'MoDungeon', 'profile': 'Isis', 'runs': 1, 'timeout_minutes': 45},
+        {'name': 'Isis Dungeon', 'type': 'MoDungeon', 'profile': 'Isis', 'runs': 1, 'timeout_minutes': 45,
+         'party_size': 1},
     ],
     'runs_dir': 'data/runs',            # <event>.json: the result of every character in the event's run
     'skip': 'data/skip.json',           # characters unticked in the dashboard
@@ -70,6 +74,7 @@ DEFAULT_SETTINGS = {
 EVENT_TYPES = ('MoDungeon',)
 
 PLUGIN_WAIT = 45            # seconds in the game without a single MoDungeon log line = it did not load
+ENTERED_LINE = '[MoDungeon] In the dungeon - fighting'   # from here on a character of a pair goes on alone if needed
 LOCK_RECHECK = 30           # seconds between two looks at locked game files
 NO_ENTRIES_WAIT = 90        # after "No more entries" MoDungeon uses a return scroll and empties the pet
 # MoDungeon log lines (plugin v4.14) -> result, note, seconds before the bot is closed (None = close_delay_seconds)
@@ -182,8 +187,18 @@ class Char:
         self.force_open = False     # Restart bot: opens even while the runner is stopped
         self.login_restarts = 0     # restarted because it got stuck at the login
         self.connected_once = False # phBot reached the game server since it opened
+        self.partner = None         # party_size 2: the character it plays with
+        self.leader = False         # the first of its pair: invites the partner
+        self.entered = False        # MoDungeon said it is in the dungeon since it opened
+        self.held = False           # no entries (played today) but its partner plays: waits in town for it
+        self.hold_note = ''
+        self.hold_min = 0.0         # not closed before this (MoDungeon's return scroll + pet to bag)
         self.state = ''
         self.level = 0
+
+
+def party_size(ev):
+    return 2 if int((ev or {}).get('party_size') or 1) >= 2 else 1
 
 
 def read_csv_rows(path):
@@ -587,8 +602,9 @@ def apply_managed(prof, template):
 
 
 def write_profile(s, c, template, build):
-    """Config/<server>_<char>.json: the build's template, solo (no party, no trace), the skill lists of the build's
-    last bracket and Auto Mastery = the build's masteries + skills, then the job mastery + job skills"""
+    """Config/<server>_<char>.json: the build's template, solo (no party, no trace) or a party of 2 with its partner,
+    the skill lists of the build's last bracket and Auto Mastery = the build's masteries + skills, then the job
+    mastery + job skills"""
     cfg = os.path.join(s['phbot_dir'], 'Config')
     path = os.path.join(cfg, '%s_%s.json' % (s['server'], c.character))
     prof = read_json(path)
@@ -604,6 +620,11 @@ def write_profile(s, c, template, build):
                   'AutoAcceptParty': False, 'Accept Invites From List': False, 'Accept All Invites': False,
                   'Invite All Players': False, 'InviteList': [], 'Party Leader Names': [],
                   'LeaveIfLeaderNotInList': False})
+    if c.partner and c.leader:          # the first of the pair invites its partner (as MassLeveler's leaders do)
+        party.update({'AutoInviteParty': True, 'Invite From List': True, 'InviteList': [c.partner]})
+    elif c.partner:                     # the second accepts only from it
+        party.update({'AutoAcceptParty': True, 'Accept Invites From List': True, 'InviteList': [c.partner],
+                      'Party Leader Names': [c.partner], 'LeaveIfLeaderNotInList': True})
     prof['Union Party'] = dict(prof.get('Union Party') or {}, AcceptUnionPartyInvites=False,
                                AutoUnionPartyInvite=False, UnionPartyAccept=[], UnionPartyInvite=[])
     prof['Trace'] = dict(prof.get('Trace') or {}, Name='None')
@@ -822,6 +843,8 @@ class Runner:
             todo = self.todo()
             for c in todo:
                 c.queued = not self.alive(c)
+                if c.queued:
+                    self.unpair(c)              # pairs are made when they open
             self.running = True
             self.next_launch = 0.0
             self.log('%s: %d character(s) to play, at most %d open at a time.' % (ev['name'], len(todo),
@@ -908,6 +931,78 @@ class Runner:
             if self.running:
                 for c in self.todo():
                     c.queued = not self.alive(c)
+                    if c.queued:
+                        self.unpair(c)
+
+    # -------------------------------------------------- pairs (party_size 2)
+    def by_name(self, name):
+        return next((c for c in self.chars if c.character == name), None) if name else None
+
+    def unpair(self, c):
+        c.partner, c.leader = None, False
+
+    def partner_ended(self, c, result):
+        """c of a pair has its result: a partner that is not in the dungeon yet cannot get in alone (the NPC needs
+        the party), so its bot closes and it waits for a new partner; one that is inside goes on alone"""
+        p = self.by_name(c.partner)
+        self.unpair(c)
+        if not p or p.partner != c.character or p.character in self.results:
+            return
+        if p.held:                          # it waited in town for c: the two close together now
+            self.release(p, time.time())
+            return
+        if self.alive(p) and not p.entered and not p.finish:
+            self.close(p, 'partner %s: %s - waiting for a new partner' % (c.character, result))
+            p.queued = True
+            self.unpair(p)
+            self.log('%s: its partner %s ended (%s) before the dungeon - closed, it plays with another one'
+                     % (p.character, c.character, result))
+        elif not self.alive(p):
+            self.unpair(p)                  # not open (yet): it gets another partner
+
+    def hold_for_partner(self, c):
+        """c got no entries (played today): it waits in town for its partner when the partner can play on - it is
+        inside, or it is the pair's leader (the leader enters first, alone if it must). A leader that got no entries
+        does not wait: its partner cannot get in without it (partner_ended gives that one a new partner)"""
+        p = self.by_name(c.partner)
+        return bool(p and p.partner == c.character and self.alive(p) and p.character not in self.results
+                    and (p.entered or p.leader))
+
+    def release(self, c, at):
+        """a character that waited in town for its partner closes at the same time as the partner"""
+        c.held = False
+        c.finish = ('no entries', c.hold_note, max(c.hold_min, at))
+        c.state = 'no entries - closing with its partner'
+
+    def pick_next(self, want):
+        """the next character to open, None = none now. party_size 2: the partner of an open character first,
+        else a new pair (two free places) - the first one opens now, its partner right after"""
+        free = int(self.s['max_open']) - self.open_count()
+        if free <= 0:
+            return None
+        if party_size(self.event()) == 1:
+            return next((c for c in want if c.force_open), want[0])
+        for c in want:
+            p = self.by_name(c.partner)
+            if p and p.partner == c.character and self.alive(p):
+                return c                    # the second of a pair (or one of a pair opened again)
+        if free < 2:
+            return None
+        a = next((c for c in want if c.force_open), want[0])
+        b = next((c for c in want if c is not a), None)
+        if not b:
+            others = [c for c in self.chars if c is not a and (self.alive(c) or c.queued)]
+            if not others and not self.closing:
+                self.unpair(a)
+                a.queued = False
+                self.set_result(a, 'failed', 'no partner left')
+                a.state = 'no partner left'
+                self.log('%s: no character left to play with - failed (Retry failed later)' % a.character)
+            return None                     # others still play: one of them may need a partner again
+        a.partner, a.leader = b.character, True
+        b.partner, b.leader = a.character, False
+        self.log('Pair: %s + %s' % (a.character, b.character))
+        return a
 
     # -------------------------------------------------- loop
     def _loop(self):
@@ -952,6 +1047,8 @@ class Runner:
     def set_result(self, c, result, note=''):
         self.results[c.character] = {'result': result, 'note': note, 'level': c.level, 'at': time.time()}
         self.save_results()
+        if c.partner:
+            self.partner_ended(c, result)
 
     def tick(self, now):
         s, ev = self.s, self.event()
@@ -974,6 +1071,15 @@ class Runner:
             live = phbot_status(c.proc.pid)
             if live and live['level']:
                 c.level = live['level']
+            if c.held:
+                # no entries, waiting in town until its partner is done (no event timeout meanwhile)
+                p = self.by_name(c.partner)
+                if not p or p.partner != c.character or not self.alive(p) or p.character in self.results:
+                    self.release(c, now)
+                elif p.finish:
+                    self.release(c, p.finish[2])     # the partner closes then: both together
+                else:
+                    continue
             if c.finish:
                 if now >= c.finish[2]:
                     self.set_result(c, c.finish[0], c.finish[1])
@@ -1025,12 +1131,22 @@ class Runner:
             for line in new_log_lines(s, c):
                 if '[MoDungeon]' in line:
                     c.plugin_seen = True
+                if ENTERED_LINE in line:
+                    c.entered = True
                 for rx, result, note, wait in MODUNGEON_LINES:
                     m = rx.search(line)
                     if m:
                         if result == 'failed' and m.groups():
                             note = '%s: %s' % (note, m.group(1))
                         wait = s['close_delay_seconds'] if wait is None else wait
+                        if result == 'no entries' and self.hold_for_partner(c):
+                            # MoDungeon (Party of 2) goes back to town; the bot stays open for its partner
+                            c.held, c.hold_note = True, note
+                            c.hold_min = max(c.hold_min, now + NO_ENTRIES_WAIT)
+                            c.state = 'no entries - waiting in town for %s' % c.partner
+                            self.log('%s: %s - waits in town for %s, then they close together' % (
+                                c.character, note, c.partner))
+                            break
                         c.finish = (result, note, now + wait)
                         c.state = result + (' - going to town' if wait > 30 else ' - closing')
                         self.log('%s: %s' % (c.character, line.strip()))
@@ -1057,7 +1173,7 @@ class Runner:
         want = [c for c in self.chars if c.queued and not self.alive(c) and not self.ready(c)
                 and c.character not in self.results and (self.running or c.force_open)]
         if want and now >= self.next_launch and self.open_count() < int(s['max_open']):
-            nxt = next((c for c in want if c.force_open), want[0])     # a bot restarted by hand goes first
+            nxt = self.pick_next(want)        # a bot restarted by hand / the partner of an open one goes first
             if nxt and not self.game_files_free():
                 self.next_launch = now + LOCK_RECHECK   # a client started now would crash: look again soon
             elif nxt:
@@ -1072,7 +1188,7 @@ class Runner:
         s = self.s
         c.queued = False
         c.finish, c.in_game_at, c.level, c.plugin_seen, c.connected_once = None, 0.0, 0, False, False
-        c.force_open = False
+        c.force_open, c.entered, c.held, c.hold_min = False, False, False, 0.0
         pid = running_phbots(s).get(c.character.lower())
         if pid:
             c.proc, c.launched_at, c.plugin_seen = RunningBot(pid), time.time(), True
@@ -1096,8 +1212,9 @@ class Runner:
         try:
             c.proc = subprocess.Popen(cmd, cwd=s['phbot_dir'])
             c.launched_at = time.time()
-            c.state = 'starting'
-            self.log('open %s (%s, %s): %s' % (c.character, c.build, ev['name'], ' '.join(masked(cmd[1:]))))
+            c.state = 'starting' + (' (with %s)' % c.partner if c.partner else '')
+            self.log('open %s (%s, %s%s): %s' % (c.character, c.build, ev['name'],
+                                                 ', with %s' % c.partner if c.partner else '', ' '.join(masked(cmd[1:]))))
         except Exception as e:
             c.proc = None
             c.state = 'open failed: %s' % e

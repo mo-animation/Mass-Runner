@@ -170,6 +170,107 @@ def restart_test():
         shutil.rmtree(work, ignore_errors=True)
 
 
+def pairs_test():
+    """event with party_size 2 (the Maze), 6 characters, at most 4 open: they open two by two, the first of a pair
+    invites the second in phBot and the second accepts only from it.
+    p01 (a leader) already played today (271c) while p02 waits at the entry NPC: without its leader p02 cannot get in,
+    so it is closed and plays with p05 instead. p04 (not a leader) already played today: it waits in town until its
+    leader p03 is done, then the two close together. p06 is left without a partner"""
+    work = tempfile.mkdtemp(prefix='mr_pairs_')
+    try:
+        phbot = os.path.join(work, 'phBot')
+        os.makedirs(os.path.join(phbot, 'Config'))
+        os.makedirs(os.path.join(phbot, 'Log'))
+        rc.write_json(os.path.join(phbot, 'Config', 'MoDungeon.json'), {'go': [1], 'dungeon': [1], 'exit': [1]})
+        with open(os.path.join(work, 'accounts.csv'), 'w') as f:
+            f.write('username,password,passcode,character\n')
+            for i in range(1, 7):
+                f.write('u%02d,p,1,p%02d\n' % (i, i))
+        settings = os.path.join(work, 'settings.json')
+        rc.write_json(settings, {
+            'phbot_dir': phbot, 'phbot_dirs': [], 'phbot_command': [sys.executable, os.path.join(ROOT, 'tools',
+                                                                                              'fake_phbot.py')],
+            'login_args': ['--x'], 'accounts_csv': os.path.join(work, 'accounts.csv'), 'only_finished': False,
+            'find_massleveler': False, 'extra_accounts': os.path.join(work, 'extra.xlsx'),
+            'finished_file': os.path.join(work, 'none.json'), 'max_open': 4, 'launch_delay_seconds': 0.5,
+            'builds_dir': os.path.join(ROOT, 'data', 'builds'), 'templates_dir': os.path.join(ROOT, 'templates'),
+            'pick_template': os.path.join(ROOT, 'templates', 'pick_filter.db3'),
+            'runs_dir': os.path.join(work, 'runs'), 'skip': os.path.join(work, 'skip.json'),
+            'close_delay_seconds': 0.5, 'event': 'Maze',
+            'events': [{'name': 'Maze', 'type': 'MoDungeon', 'profile': 'Maze', 'runs': 1, 'timeout_minutes': 45,
+                        'party_size': 2}]})
+        for k in ('FAKE_LOW', 'FAKE_NO_QUIT', 'FAKE_NO_PLUGIN', 'FAKE_NO_CONNECT', 'FAKE_CRASH'):
+            os.environ.pop(k, None)
+        os.environ['FAKE_PLAYED'] = 'p01,p04'
+        os.environ['FAKE_WAIT'] = 'p02'
+        os.environ['FAKE_DUNGEON_SECONDS'] = '6'      # both of a pair are inside before either is done
+        no_entries_wait, rc.NO_ENTRIES_WAIT = rc.NO_ENTRIES_WAIT, 2
+        logs = []
+        r = rc.Runner(settings, log=logs.append)
+        r.start()
+        most = 0
+        t0 = time.time()
+        while time.time() - t0 < 60:
+            with r.lock:
+                most = max(most, r.open_count())
+                if not r.running:
+                    break
+            time.sleep(0.3)
+        r.shutdown()
+        for l in logs:
+            print(' ', l)
+        res = {k: v['result'] for k, v in sorted(r.results.items())}
+        print('results:', res)
+        pairs = [l for l in logs if l.startswith('Pair: ')]
+        assert pairs == ['Pair: p01 + p02', 'Pair: p03 + p04', 'Pair: p02 + p05'], pairs
+        assert any(l.startswith('p02: its partner p01 ended (no entries) before the dungeon') for l in logs), logs
+        assert res == {'p01': 'no entries', 'p02': 'done', 'p03': 'done', 'p04': 'no entries', 'p05': 'done',
+                       'p06': 'failed'}, res
+        held = next(i for i, l in enumerate(logs) if l.startswith('p04:') and 'waits in town for p03' in l)
+        p03_done = next(i for i, l in enumerate(logs) if l.startswith('p03 done - closed'))
+        p04_closed = next(i for i, l in enumerate(logs) if l.startswith('p04 no entries') and l.endswith('closed'))
+        assert held < p03_done and abs(p04_closed - p03_done) <= 2, (held, p03_done, p04_closed)
+        t3 = r.results['p03']['at']
+        t4 = r.results['p04']['at']
+        assert abs(t3 - t4) < 3, 'p04 did not close with p03: %.1f s apart' % abs(t3 - t4)
+        assert r.results['p06']['note'] == 'no partner left', r.results['p06']
+        assert most <= 4, 'more than 4 open: %d' % most
+        cfg = os.path.join(phbot, 'Config')
+        lead = rc.read_json(os.path.join(cfg, 'Elysian_p03.json'))['Party']
+        mem = rc.read_json(os.path.join(cfg, 'Elysian_p04.json'))['Party']
+        assert lead['AutoInviteParty'] and lead['Invite From List'] and lead['InviteList'] == ['p04'], lead
+        assert not lead['AutoAcceptParty'], lead
+        assert mem['AutoAcceptParty'] and mem['Accept Invites From List'] and mem['Party Leader Names'] == ['p03'], mem
+        assert not mem['AutoInviteParty'] and not mem['Accept All Invites'], mem
+        p02 = rc.read_json(os.path.join(cfg, 'Elysian_p02.json'))['Party']
+        assert p02['InviteList'] == ['p05'] and p02['AutoInviteParty'], 'p02 not the leader with p05: %s' % p02
+        alive = [c.character for c in r.chars if c.proc and rc.process_alive(c.proc.pid)]
+        assert not alive, alive
+        print('OK - pairs (party of 2)')
+    finally:
+        rc.NO_ENTRIES_WAIT = no_entries_wait
+        os.environ.pop('FAKE_WAIT', None)
+        os.environ.pop('FAKE_DUNGEON_SECONDS', None)
+        time.sleep(1)
+        shutil.rmtree(work, ignore_errors=True)
+
+
+def solo_party_test():
+    """party_size 1 (Isis): every phBot profile stays solo"""
+    c = rc.Char('u', 'p', '1', 'solo01', 'ch_nuker')
+    work = tempfile.mkdtemp(prefix='mr_solo_')
+    try:
+        os.makedirs(os.path.join(work, 'Config'))
+        rc.write_profile({'phbot_dir': work, 'server': 'Elysian', 'job_mastery': '', 'job_skills': []}, c, {}, {})
+        p = rc.read_json(os.path.join(work, 'Config', 'Elysian_solo01.json'))['Party']
+        assert not (p['AutoInviteParty'] or p['AutoAcceptParty'] or p['InviteList']), p
+        print('OK - solo profile has no party')
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
 if __name__ == '__main__':
     main()
     restart_test()
+    solo_party_test()
+    pairs_test()
