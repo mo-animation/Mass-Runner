@@ -170,6 +170,78 @@ def restart_test():
         shutil.rmtree(work, ignore_errors=True)
 
 
+def pair_run(work, n, env):
+    """runs a party_size 2 event (the Maze) of n fake characters p01.., at most 4 open, with FAKE_ settings env;
+    returns the runner, its log, the phBot folder and the most bots open at once"""
+    phbot = os.path.join(work, 'phBot')
+    os.makedirs(os.path.join(phbot, 'Config'))
+    os.makedirs(os.path.join(phbot, 'Log'))
+    rc.write_json(os.path.join(phbot, 'Config', 'MoDungeon.json'), {'go': [1], 'dungeon': [1], 'exit': [1]})
+    with open(os.path.join(work, 'accounts.csv'), 'w') as f:
+        f.write('username,password,passcode,character\n')
+        for i in range(1, n + 1):
+            f.write('u%02d,p,1,p%02d\n' % (i, i))
+    settings = os.path.join(work, 'settings.json')
+    rc.write_json(settings, {
+        'phbot_dir': phbot, 'phbot_dirs': [], 'phbot_command': [sys.executable, os.path.join(ROOT, 'tools',
+                                                                                          'fake_phbot.py')],
+        'login_args': ['--x'], 'accounts_csv': os.path.join(work, 'accounts.csv'), 'only_finished': False,
+        'find_massleveler': False, 'extra_accounts': os.path.join(work, 'extra.xlsx'),
+        'finished_file': os.path.join(work, 'none.json'), 'max_open': 4, 'launch_delay_seconds': 0.5,
+        'builds_dir': os.path.join(ROOT, 'data', 'builds'), 'templates_dir': os.path.join(ROOT, 'templates'),
+        'pick_template': os.path.join(ROOT, 'templates', 'pick_filter.db3'),
+        'runs_dir': os.path.join(work, 'runs'), 'skip': os.path.join(work, 'skip.json'),
+        'close_delay_seconds': 0.5, 'event': 'Maze',
+        'events': [{'name': 'Maze', 'type': 'MoDungeon', 'profile': 'Maze', 'runs': 1, 'timeout_minutes': 45,
+                    'party_size': 2}]})
+    for k in ('FAKE_LOW', 'FAKE_NO_QUIT', 'FAKE_NO_PLUGIN', 'FAKE_NO_CONNECT', 'FAKE_CRASH', 'FAKE_PLAYED',
+              'FAKE_WAIT', 'FAKE_GATE'):
+        os.environ.pop(k, None)
+    os.environ.update(env)
+    os.environ['FAKE_DUNGEON_SECONDS'] = '6'      # both of a pair are inside before either is done
+    logs = []
+    r = rc.Runner(settings, log=logs.append)
+    r.start()
+    most = 0
+    t0 = time.time()
+    while time.time() - t0 < 60:
+        with r.lock:
+            most = max(most, r.open_count())
+            if not r.running:
+                break
+        time.sleep(0.3)
+    r.shutdown()
+    for k in list(env) + ['FAKE_DUNGEON_SECONDS']:
+        os.environ.pop(k, None)
+    return r, logs, phbot, most
+
+
+def gate_test():
+    """p01 waited at the entry NPC and its partner p02 did not come (MoDungeon: back to town and stop): p01 fails
+    (Retry failed later) and closes; p02, not inside, closes too and plays with p05 instead"""
+    work = tempfile.mkdtemp(prefix='mr_gate_')
+    lines = rc.MODUNGEON_LINES[:]
+    # the 90 s for the return scroll -> 2 s (the wait is in the line's table)
+    rc.MODUNGEON_LINES[:] = [(rx, res, note, 2 if 'gate' in note else wait) for rx, res, note, wait in lines]
+    try:
+        r, logs, phbot, most = pair_run(work, 5, {'FAKE_GATE': 'p01', 'FAKE_WAIT': 'p02'})
+        for l in logs:
+            print(' ', l)
+        res = {k: (v['result'], v['note']) for k, v in sorted(r.results.items())}
+        print('results:', res)
+        assert res['p01'] == ('failed', 'partner did not come to the gate'), res
+        assert all(res[c][0] == 'done' for c in ('p02', 'p03', 'p04', 'p05')), res
+        pairs = [l for l in logs if l.startswith('Pair: ')]
+        assert pairs == ['Pair: p01 + p02', 'Pair: p03 + p04', 'Pair: p02 + p05'], pairs
+        alive = [c.character for c in r.chars if c.proc and rc.process_alive(c.proc.pid)]
+        assert not alive, alive
+        print('OK - partner did not come to the gate')
+    finally:
+        rc.MODUNGEON_LINES[:] = lines
+        time.sleep(1)
+        shutil.rmtree(work, ignore_errors=True)
+
+
 def pairs_test():
     """event with party_size 2 (the Maze), 6 characters, at most 4 open: they open two by two, the first of a pair
     invites the second in phBot and the second accepts only from it.
@@ -177,46 +249,9 @@ def pairs_test():
     so it is closed and plays with p05 instead. p04 (not a leader) already played today: it waits in town until its
     leader p03 is done, then the two close together. p06 is left without a partner"""
     work = tempfile.mkdtemp(prefix='mr_pairs_')
+    no_entries_wait, rc.NO_ENTRIES_WAIT = rc.NO_ENTRIES_WAIT, 2
     try:
-        phbot = os.path.join(work, 'phBot')
-        os.makedirs(os.path.join(phbot, 'Config'))
-        os.makedirs(os.path.join(phbot, 'Log'))
-        rc.write_json(os.path.join(phbot, 'Config', 'MoDungeon.json'), {'go': [1], 'dungeon': [1], 'exit': [1]})
-        with open(os.path.join(work, 'accounts.csv'), 'w') as f:
-            f.write('username,password,passcode,character\n')
-            for i in range(1, 7):
-                f.write('u%02d,p,1,p%02d\n' % (i, i))
-        settings = os.path.join(work, 'settings.json')
-        rc.write_json(settings, {
-            'phbot_dir': phbot, 'phbot_dirs': [], 'phbot_command': [sys.executable, os.path.join(ROOT, 'tools',
-                                                                                              'fake_phbot.py')],
-            'login_args': ['--x'], 'accounts_csv': os.path.join(work, 'accounts.csv'), 'only_finished': False,
-            'find_massleveler': False, 'extra_accounts': os.path.join(work, 'extra.xlsx'),
-            'finished_file': os.path.join(work, 'none.json'), 'max_open': 4, 'launch_delay_seconds': 0.5,
-            'builds_dir': os.path.join(ROOT, 'data', 'builds'), 'templates_dir': os.path.join(ROOT, 'templates'),
-            'pick_template': os.path.join(ROOT, 'templates', 'pick_filter.db3'),
-            'runs_dir': os.path.join(work, 'runs'), 'skip': os.path.join(work, 'skip.json'),
-            'close_delay_seconds': 0.5, 'event': 'Maze',
-            'events': [{'name': 'Maze', 'type': 'MoDungeon', 'profile': 'Maze', 'runs': 1, 'timeout_minutes': 45,
-                        'party_size': 2}]})
-        for k in ('FAKE_LOW', 'FAKE_NO_QUIT', 'FAKE_NO_PLUGIN', 'FAKE_NO_CONNECT', 'FAKE_CRASH'):
-            os.environ.pop(k, None)
-        os.environ['FAKE_PLAYED'] = 'p01,p04'
-        os.environ['FAKE_WAIT'] = 'p02'
-        os.environ['FAKE_DUNGEON_SECONDS'] = '6'      # both of a pair are inside before either is done
-        no_entries_wait, rc.NO_ENTRIES_WAIT = rc.NO_ENTRIES_WAIT, 2
-        logs = []
-        r = rc.Runner(settings, log=logs.append)
-        r.start()
-        most = 0
-        t0 = time.time()
-        while time.time() - t0 < 60:
-            with r.lock:
-                most = max(most, r.open_count())
-                if not r.running:
-                    break
-            time.sleep(0.3)
-        r.shutdown()
+        r, logs, phbot, most = pair_run(work, 6, {'FAKE_PLAYED': 'p01,p04', 'FAKE_WAIT': 'p02'})
         for l in logs:
             print(' ', l)
         res = {k: v['result'] for k, v in sorted(r.results.items())}
@@ -249,8 +284,6 @@ def pairs_test():
         print('OK - pairs (party of 2)')
     finally:
         rc.NO_ENTRIES_WAIT = no_entries_wait
-        os.environ.pop('FAKE_WAIT', None)
-        os.environ.pop('FAKE_DUNGEON_SECONDS', None)
         time.sleep(1)
         shutil.rmtree(work, ignore_errors=True)
 
@@ -274,3 +307,4 @@ if __name__ == '__main__':
     restart_test()
     solo_party_test()
     pairs_test()
+    gate_test()

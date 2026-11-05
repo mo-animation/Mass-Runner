@@ -85,6 +85,9 @@ MODUNGEON_LINES = [
     # 271c came after a finished run the same day; 291c = full for now, it got in later). MoDungeon only retries.
     (re.compile(r'\[MoDungeon\] debug: NPC refused, code 271c'), 'no entries', 'already played today (NPC code 271c)',
      None),
+    # Party of 2: the partner did not come to the entry NPC in time - MoDungeon goes back to town and stops
+    (re.compile(r'\[MoDungeon\] My partner did not come to the gate'), 'failed', 'partner did not come to the gate',
+     NO_ENTRIES_WAIT),
     (re.compile(r'\[MoDungeon\] Character died - stopped'), 'failed', 'died', None),
     (re.compile(r'\[MoDungeon\] Record all 3 columns first'), 'failed', 'the MoDungeon profile has no route', None),
     (re.compile(r'\[MoDungeon\] Did not get into the dungeon'), 'failed', 'did not get into the dungeon', None),

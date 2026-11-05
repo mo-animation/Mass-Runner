@@ -49,6 +49,9 @@ with open(os.path.join('Log', 'Elysian_%s_Log.txt' % char), 'a') as f:
     elif char in os.environ.get('FAKE_WAIT', '').split(',') and not os.path.isfile('wait_%s.txt' % char):
         open('wait_%s.txt' % char, 'w').close()     # the first time: stays at the entry NPC (no result of its own)
         f.write('[10:00:00] [MoDungeon] Going to the dungeon...\n')
+    elif char in os.environ.get('FAKE_GATE', '').split(','):       # its partner did not come to the entry NPC
+        f.write('[10:00:00] [MoDungeon] My partner did not come to the gate in 5 min - going back to town and '
+                'stopping.\n')
     elif char in os.environ.get('FAKE_PLAYED', '').split(','):     # already played today: the entry NPC refuses
         f.write('[10:00:00] [MoDungeon] debug: NPC refused, code 271c\n[10:00:00] [MoDungeon] No teleport after '
                 'talking to the NPC (dungeon full?) - trying again every 3s until it works (try 2).\n')
